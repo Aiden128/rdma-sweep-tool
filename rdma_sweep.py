@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 """RDMA parameter sweep tool for perftest.
 
-Sweep across QP count, message size, tx_depth, rx_depth, post_list,
-cq_mod, and other perftest parameters.  Records CPU/memory during
-each test run and annotates every result with a UTC timestamp
-(perftest JSON natively has none).
-
-Usage:
-  rdma_sweep.py --config sweep.yaml --output-dir ./results/
-  rdma_sweep.py --config sweep.yaml --host bf3-dpu --perftest-dir /path/to/perftest
+Operations:
+  1. rdma_sweep.py -c config.yaml -o results/     # run sweep
+  2. rdma_sweep.py --report results/               # generate SVG report
 """
 
 from __future__ import annotations
@@ -17,6 +12,7 @@ import argparse
 import csv
 import itertools
 import json
+import math
 import os
 import shlex
 import signal
@@ -760,18 +756,204 @@ def _write_csv(path: Path, summary: list[dict]) -> None:
 # CLI
 # ---------------------------------------------------------------------------
 
+SVG_COLORS = [
+    "#2563eb", "#dc2626", "#16a34a", "#ca8a04",
+    "#9333ea", "#0891b2", "#be123c", "#d1d5db",
+]
+
+
+def _svg_chart(summary: list[dict]) -> str:
+    """Generate a static SVG report from sweep summary data."""
+    qps = [e["params"]["qp"] for e in summary]
+    bw_vals = [e["BW_average"] for e in summary]
+    rate_vals = [e["MsgRate"] for e in summary]
+
+    perf_data = []
+    for i in range(len(summary)):
+        p = Path(summary[i].get("_result_path", f"{i+1:04d}/result.json"))
+        if p.exists():
+            d = json.loads(p.read_text())
+            perf_data.append(d.get("_process", {}).get("server_perf", {}))
+        else:
+            perf_data.append({})
+
+    all_syms = set()
+    for pd in perf_data:
+        for s, v in sorted(pd.items(), key=lambda x: -x[1])[:5]:
+            if v > 0:
+                all_syms.add(s)
+    sym_total = {s: sum(pd.get(s, 0) for pd in perf_data) for s in all_syms}
+    top_syms = sorted(sym_total, key=lambda s: -sym_total[s])[:7]
+
+    series = [(sym, [pd.get(sym, 0) for pd in perf_data]) for sym in top_syms]
+
+    cores = sorted(
+        [k for k in summary[0].get("cpu_per_core", {}) if k.startswith("cpu") and k != "cpu"],
+        key=lambda c: int(c.replace("cpu", "")),
+    )
+    table_hdrs = ["QP"] + cores
+    table_rows = [
+        [str(q)] + [f'{summary[i]["cpu_per_core"].get(c, 0):.1f}' for c in cores]
+        for i, q in enumerate(qps)
+    ]
+
+    W, H, M = 1100, 900, 16
+    el: list[str] = []
+    el.append(f"<svg xmlns='http://www.w3.org/2000/svg' width='{W}' height='{H}' viewBox='0 0 {W} {H}' style='background:#f8fafc'>")
+    el.append(f"<text x='{W/2}' y='26' font-family='system-ui,sans-serif' font-size='18' font-weight='bold' fill='#1e293b' text-anchor='middle'>RDMA Write BW Sweep</text>")
+    el.append(f"<text x='{W/2}' y='42' font-family='system-ui,sans-serif' font-size='12' fill='#64748b' text-anchor='middle'>SoftRoCE (rxe0) &#183; 64K msg &#183; ib_write_bw &#183; server perf record -g</text>")
+
+    y = 56
+    for col, (label, ylbl, yv, clr) in enumerate([
+        ("Bandwidth (MB/s)", "MB/s", bw_vals, "#2563eb"),
+        ("Message Rate (Mmsg/s)", "Kmsg/s", [r * 1000 for r in rate_vals], "#16a34a"),
+    ]):
+        cx = M + col * ((W - 3 * M) / 2 + M)
+        cw = (W - 3 * M) / 2
+        el.append(f"<rect x='{cx}' y='{y}' width='{cw}' height='220' rx='6' fill='#fff' stroke='#e2e8f0' stroke-width='1'/>")
+        _line_chart(el, [float(q) for q in qps], yv, label, ylbl, cx + 8, y + 4, cw - 16, 212, clr)
+
+    y += 220 + M
+    el.append(f"<rect x='{M}' y='{y}' width='{W - 2 * M}' height='280' rx='6' fill='#fff' stroke='#e2e8f0' stroke-width='1'/>")
+    _stacked_bar(el, [str(q) for q in qps], series, M + 8, y + 4, W - 2 * M - 16, 272)
+
+    y += 280 + M
+    th = 30 + 24 * (len(table_rows) + 1)
+    el.append(f"<rect x='{M}' y='{y}' width='{W - 2 * M}' height='{th}' rx='6' fill='#fff' stroke='#e2e8f0' stroke-width='1'/>")
+    _svg_table(el, table_hdrs, table_rows, "Per-Core CPU Utilization (%)", M + 8, y + 4, W - 2 * M - 16)
+
+    el.append("</svg>")
+    return "\n".join(el)
+
+
+def _line_chart(el: list[str], xv: list[float], yv: list[float], title: str, ylb: str, x: float, y: float, w: float, h: float, clr: str) -> None:
+    pl, pr, pb, pt = 50, 20, 40, 40
+    cx, cy, cw, ch = x + pl, y + pt, w - pl - pr, h - pt - pb
+    ymn, ymx = 0, max(yv) * 1.1 or 1
+    xmn, xmx = min(xv), max(xv)
+
+    def px(v: float) -> float:
+        return cx + (math.log2(v) - math.log2(xmn)) / (math.log2(xmx) - math.log2(xmn)) * cw if xmx != xmn else cx + cw / 2
+
+    def py(v: float) -> float:
+        return cy + ch - (v - ymn) / (ymx - ymn) * ch
+
+    el.append(f"<text x='{x + w/2}' y='{y + 12}' font-family='system-ui,sans-serif' font-size='14' font-weight='bold' fill='#1e293b' text-anchor='middle'>{title}</text>")
+    el.append(f"<text x='{x + pl/2}' y='{y + pt + ch/2}' font-family='system-ui,sans-serif' font-size='11' fill='#64748b' text-anchor='middle' transform='rotate(-90,{x + pl/2},{y + pt + ch/2})'>{ylb}</text>")
+    for i in range(5):
+        gy = cy + ch * i / 4
+        el.append(f"<line x1='{cx}' y1='{gy}' x2='{cx + cw}' y2='{gy}' stroke='#e2e8f0' stroke-width='1'/>")
+        el.append(f"<text x='{cx - 6}' y='{gy + 4}' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>{_fmt(ymn + (ymx - ymn) * (1 - i / 4), 0)}</text>")
+    el.append(f"<line x1='{cx}' y1='{cy + ch}' x2='{cx + cw}' y2='{cy + ch}' stroke='#94a3b8' stroke-width='1'/>")
+    for vx in xv:
+        lx = px(vx)
+        el.append(f"<line x1='{lx}' y1='{cy + ch}' x2='{lx}' y2='{cy + ch + 4}' stroke='#94a3b8' stroke-width='1'/>")
+        el.append(f"<text x='{lx}' y='{cy + ch + 18}' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>{int(vx)}</text>")
+    pts = " ".join(f"{px(vx)},{py(vy)}" for vx, vy in zip(xv, yv))
+    el.append(f"<polyline points='{pts}' fill='none' stroke='{clr}' stroke-width='2.5' stroke-linejoin='round'/>")
+    for vx, vy in zip(xv, yv):
+        dx, dy = px(vx), py(vy)
+        el.append(f"<circle cx='{dx}' cy='{dy}' r='4' fill='{clr}'/>")
+        el.append(f"<text x='{dx}' y='{dy - 10}' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>{_fmt(vy, 0)}</text>")
+
+
+def _stacked_bar(el: list[str], xlb: list[str], series: list[tuple[str, list[float]]], x: float, y: float, w: float, h: float) -> None:
+    pl, pr, pb, pt = 50, 160, 40, 40
+    cx, cy, cw, ch = x + pl, y + pt, w - pl - pr, h - pt - pb
+    n = len(xlb)
+    bw = min(cw / n * 0.7, 50)
+    gap = (cw - bw * n) / (n + 1)
+    el.append(f"<text x='{x + w/2}' y='{y + 12}' font-family='system-ui,sans-serif' font-size='14' font-weight='bold' fill='#1e293b' text-anchor='middle'>Top CPU Consumers (self %)</text>")
+    el.append(f"<text x='{x + pl/2}' y='{y + pt + ch/2}' font-family='system-ui,sans-serif' font-size='11' fill='#64748b' text-anchor='middle' transform='rotate(-90,{x + pl/2},{y + pt + ch/2})'>Self %</text>")
+    for i in range(5):
+        gy = cy + ch * i / 4
+        el.append(f"<line x1='{cx}' y1='{gy}' x2='{cx + cw}' y2='{gy}' stroke='#e2e8f0' stroke-width='1'/>")
+        el.append(f"<text x='{cx - 6}' y='{gy + 4}' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>{100 - 100 * i // 4}</text>")
+    el.append(f"<line x1='{cx}' y1='{cy + ch}' x2='{cx + cw}' y2='{cy + ch}' stroke='#94a3b8' stroke-width='1'/>")
+    for si in range(n):
+        bx = cx + gap + si * (bw + gap)
+        el.append(f"<text x='{bx + bw/2}' y='{cy + ch + 18}' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>{xlb[si]}</text>")
+        bottom = 0.0
+        for ci, (_, vals) in enumerate(series):
+            v = vals[si]
+            if v <= 0: continue
+            bh = v / 100 * ch
+            clr = SVG_COLORS[ci % len(SVG_COLORS)]
+            el.append(f"<rect x='{bx}' y='{cy + ch - bottom - bh}' width='{bw}' height='{bh}' fill='{clr}'/>")
+            bottom += v
+    lx, ly2 = cx + cw + 12, cy + 4
+    for ci, (name, _) in enumerate(series):
+        display = name if len(name) < 32 else name[:29] + "..."
+        el.append(f"<rect x='{lx}' y='{ly2}' width='10' height='10' fill='{SVG_COLORS[ci % len(SVG_COLORS)]}' rx='2'/>")
+        el.append(f"<text x='{lx + 16}' y='{ly2 + 10}' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b'>{display}</text>")
+        ly2 += 18
+
+
+def _svg_table(el: list[str], hdrs: list[str], rows: list[list[str]], title: str, x: float, y: float, w: float) -> None:
+    ncols = len(hdrs)
+    cw = w / ncols
+    el.append(f"<text x='{x + w/2}' y='{y + 12}' font-family='system-ui,sans-serif' font-size='14' font-weight='bold' fill='#1e293b' text-anchor='middle'>{title}</text>")
+    ty = y + 28
+    for ci, hdr in enumerate(hdrs):
+        el.append(f"<rect x='{x + ci * cw}' y='{ty}' width='{cw}' height='24' fill='#f1f5f9'/>")
+        el.append(f"<text x='{x + ci * cw + cw/2}' y='{ty + 16}' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>{hdr}</text>")
+        el.append(f"<line x1='{x + ci * cw}' y1='{ty}' x2='{x + ci * cw}' y2='{ty + 24 * (len(rows) + 1)}' stroke='#e2e8f0' stroke-width='0.5'/>")
+    el.append(f"<line x1='{x + ncols * cw}' y1='{ty}' x2='{x + ncols * cw}' y2='{ty + 24 * (len(rows) + 1)}' stroke='#e2e8f0' stroke-width='0.5'/>")
+    for ri, row in enumerate(rows):
+        ry = ty + 24 * (ri + 1)
+        bg = "#f8fafc" if ri % 2 == 1 else ""
+        for ci, val in enumerate(row):
+            if bg:
+                el.append(f"<rect x='{x + ci * cw}' y='{ry}' width='{cw}' height='24' fill='{bg}'/>")
+            el.append(f"<text x='{x + ci * cw + cw/2}' y='{ry + 16}' font-family='system-ui,sans-serif' font-size='11' font-weight='{'bold' if ci == 0 else 'normal'}' fill='#1e293b' text-anchor='middle'>{val}</text>")
+
+
+def _fmt(v: float, d: int = 0) -> str:
+    return f"{v:.0f}" if v >= 1000 else f"{v:.{d}f}"
+
+
+def generate_report(output_dir: str) -> None:
+    """Generate SVG (and optionally PDF) report from existing sweep results."""
+    out = Path(output_dir)
+    summary = json.loads((out / "summary.json").read_text())
+    for i in range(len(summary)):
+        summary[i]["_result_path"] = str(out / f"{i+1:04d}" / "result.json")
+    svg = _svg_chart(summary)
+    svg_path = out / "chart.svg"
+    svg_path.write_text(svg)
+    print(f"Report SVG → {svg_path}")
+    try:
+        import subprocess
+        r = subprocess.run(["which", "cairosvg"], capture_output=True, text=True)
+        if r.returncode == 0:
+            pdf_path = out / "chart.pdf"
+            subprocess.run(["cairosvg", str(svg_path), "-o", str(pdf_path)], check=True)
+            print(f"Report PDF → {pdf_path}")
+    except Exception:
+        pass
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(
         description="RDMA perftest parameter sweep tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__,
     )
-    ap.add_argument("--config", "-c", required=True, help="YAML sweep config")
+    ap.add_argument("--config", "-c", help="YAML sweep config (run sweep mode)")
     ap.add_argument("--output-dir", "-o", default="sweep_results", help="Output directory")
+    ap.add_argument("--report", "-r", nargs="?", const=True, default=False, help="Generate report from existing results (optional: path to results dir)")
     args = ap.parse_args()
+
+    report_dir = args.report if isinstance(args.report, str) else args.output_dir
+    if args.report:
+        generate_report(report_dir)
+        return
 
     if yaml is None:
         print("ERROR: PyYAML is required.  pip install pyyaml", file=sys.stderr)
+        sys.exit(1)
+
+    if not args.config:
+        ap.print_help()
         sys.exit(1)
 
     config = yaml.safe_load(Path(args.config).read_text())
