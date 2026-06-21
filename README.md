@@ -71,6 +71,6 @@ Each `result.json` includes:
 
 Run included at `examples/qp_scale/` — QP sweep 2→128 on SoftRoCE (rxe0), 64K msg, 10s:
 
-![chart](examples/qp_scale/chart.png)
+![chart](examples/qp_scale/chart.svg)
 
 Key finding: bandwidth stays flat at ~715 MB/s across all QP counts. The bottleneck shifts between kernel subsystems as QP scales, but SoftRoCE throughput is stable once steady-state is reached.
