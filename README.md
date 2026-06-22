@@ -46,15 +46,16 @@ results/
 
 ## Sweep parameters
 
-| Config key | Flag | Description |
-| msg_size | -s | Message size |
-| qp | -q | Queue pairs |
-| tx_depth | -t | TX depth |
-| rx_depth | -r | RX depth |
-| port | -p | Port |
-| duration | -D | Test seconds |
-| device | -d | IB device |
-| *(other)* | --{name} | Passed through to perftest |
+| Config key  | Flag       | Description                  |
+|-------------|------------|------------------------------|
+| msg_size    | -s         | Message size                 |
+| qp          | -q         | Queue pairs                  |
+| tx_depth    | -t         | TX depth                     |
+| rx_depth    | -r         | RX depth                     |
+| port        | -p         | Port                         |
+| duration    | -D         | Test seconds                 |
+| device      | -d         | IB device                    |
+| *(other)*   | `--{name}` | Passed through to perftest   |
 
 ## Example
 
