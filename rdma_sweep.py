@@ -64,11 +64,12 @@ def format_size(n: int) -> str:
     """Bytes → human-readable string."""
     if n < 0:
         return f"-{format_size(abs(n))}"
+    value = float(n)
     for unit in ("B", "K", "M", "G"):
-        if n < 1024:
-            return f"{n:.1f}{unit}" if unit != "B" else f"{n}{unit}"
-        n /= 1024
-    return f"{n:.1f}T"
+        if value < 1024:
+            return f"{value:.1f}{unit}" if unit != "B" else f"{int(value)}{unit}"
+        value /= 1024
+    return f"{value:.1f}T"
 
 
 # ---------------------------------------------------------------------------
@@ -558,7 +559,12 @@ def run_perftest(
             pass
         return {"error": str(exc), "_process": process}
     finally:
-        _cancel(server_host, ssh_config, server_pid_file, bin_path, run_id)
+        cleanup = _cancel(server_host, ssh_config, server_pid_file, bin_path, run_id)
+        if cleanup:
+            process["commands"]["cleanup"] = cleanup
+            cleanup_error = cleanup.get("error")
+            if cleanup_error:
+                process["cleanup_error"] = cleanup_error
 
 
 def _cancel(
@@ -567,17 +573,20 @@ def _cancel(
     server_pid_file: str = "",
     expected_binary: str = "",
     expected_run_id: str = "",
-) -> None:
+) -> dict[str, Any]:
+    evidence: dict[str, Any] = {}
     if not server_pid_file or not expected_binary or not expected_run_id:
-        return
+        return evidence
     pid_file_q = shlex.quote(server_pid_file)
     try:
-        pid_lines = _run_remote_result(
+        pid_read = _run_remote_result(
             f"cat {pid_file_q} 2>/dev/null || true",
             host,
             ssh_config=ssh_config,
             sudo=False,
-        ).stdout.splitlines()
+        )
+        evidence["pid_read"] = pid_read.to_dict()
+        pid_lines = pid_read.stdout.splitlines()
         pid = pid_lines[0].strip() if len(pid_lines) >= 1 else ""
         expected_start = pid_lines[1].strip() if len(pid_lines) >= 2 else ""
         pid_run_id = pid_lines[2].strip() if len(pid_lines) >= 3 else ""
@@ -587,7 +596,7 @@ def _cancel(
             expected_start_q = shlex.quote(expected_start)
             expected_run_id_q = shlex.quote(expected_run_id)
             pid_run_id_q = shlex.quote(pid_run_id)
-            _run_remote_result(
+            cleanup = _run_remote_result(
                 f"args=$(ps -p {pid_q} -o args= 2>/dev/null || true); "
                 f"started=$(ps -p {pid_q} -o lstart= 2>/dev/null | sed 's/^ *//'); "
                 f"if [ {pid_run_id_q} = {expected_run_id_q} ] && "
@@ -596,13 +605,19 @@ def _cancel(
                 f"kill -TERM {pid_q} 2>/dev/null || true; "
                 f"sleep 1; "
                 f"kill -KILL {pid_q} 2>/dev/null || true; "
-                f"rm -f {pid_file_q}; "
+                f"if ps -p {pid_q} >/dev/null 2>&1; then "
+                f"echo \"cleanup failed for pid {pid_q}\" >&2; exit 1; fi; "
+                f"rm -f {pid_file_q}; echo cleaned; "
                 f"else echo \"skip cleanup for pid {pid_q}: $args\" >&2; fi",
                 host,
                 ssh_config=ssh_config,
             )
-    except Exception:
-        pass
+            evidence["cleanup"] = cleanup.to_dict()
+            if not cleanup.ok:
+                evidence["error"] = cleanup.error_summary()
+    except Exception as exc:
+        evidence["error"] = str(exc)
+    return evidence
 
 
 def _parse_json_output(raw: str | None) -> dict[str, Any]:
@@ -897,7 +912,7 @@ def run_sweep(config: dict[str, Any], output_dir: str = "sweep_results") -> list
     return result_files
 
 
-def _write_csv(path: Path, summary: list[dict]) -> None:
+def _write_csv(path: Path, summary: list[dict[str, Any]]) -> None:
     if not summary:
         return
 
@@ -997,7 +1012,7 @@ SVG_COLORS = [
 ]
 
 
-def _svg_chart(summary: list[dict], report_config: dict[str, Any] | None = None) -> str:
+def _svg_chart(summary: list[dict[str, Any]], report_config: dict[str, Any] | None = None) -> str:
     """Generate a static SVG report from sweep summary data."""
     report_config = report_config or {}
     qps = [e.get("params", {}).get("qp", i + 1) for i, e in enumerate(summary)]
@@ -1248,6 +1263,8 @@ def generate_report(output_dir: str) -> None:
     """Generate SVG (and optionally PDF) report from existing sweep results."""
     out = Path(output_dir)
     summary = json.loads((out / "summary.json").read_text())
+    if not summary:
+        raise ValueError("summary.json contains no sweep entries")
     for i in range(len(summary)):
         summary[i]["_result_path"] = str(out / f"{i+1:04d}" / "result.json")
     report_config: dict[str, Any] = {}

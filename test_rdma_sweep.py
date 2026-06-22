@@ -7,6 +7,10 @@ Or:  python3 -m rdma_sweep_tool.test_rdma_sweep
 import unittest
 import sys
 import os
+import json
+import subprocess
+import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -15,12 +19,14 @@ from rdma_sweep import (
     DEFAULT_PERFTEST_CONFIG,
     SysMonitor,
     _build_args,
+    _cancel,
     _parse_json_output,
     _parse_perf_report,
     _runtime_config,
+    generate_report,
     run_perftest,
 )
-from rdma_remote import RemoteResult
+from rdma_remote import RemoteResult, run_local_result, run_remote_result
 
 
 # ---------------------------------------------------------------------------
@@ -255,6 +261,7 @@ class TestDualHostConfig(unittest.TestCase):
             "client": {"host": "client-ssh"},
             "perftest": {"dir": "/opt/perftest"},
         })
+        self.assertFalse(runtime["ssh"]["allow_local"])
         self.assertIn("StrictHostKeyChecking=accept-new", runtime["ssh"]["options"])
         self.assertNotIn("StrictHostKeyChecking=no", runtime["ssh"]["options"])
         self.assertNotIn("UserKnownHostsFile=/dev/null", runtime["ssh"]["options"])
@@ -354,7 +361,7 @@ class TestRunPerftestDualHost(unittest.TestCase):
         with (
             patch("rdma_sweep._run_remote_result", side_effect=fake_run_remote_result),
             patch("rdma_sweep._wait_for_port") as wait_for_port,
-            patch("rdma_sweep._cancel") as cancel,
+            patch("rdma_sweep._cancel", return_value={}) as cancel,
         ):
             result = run_perftest(
                 binary="ib_write_bw",
@@ -428,7 +435,7 @@ class TestRunPerftestDualHost(unittest.TestCase):
         with (
             patch("rdma_sweep._run_remote_result", side_effect=fake_run_remote_result),
             patch("rdma_sweep._wait_for_port"),
-            patch("rdma_sweep._cancel"),
+            patch("rdma_sweep._cancel", return_value={}),
         ):
             result = run_perftest(
                 binary="ib_write_bw",
@@ -479,7 +486,7 @@ class TestRunPerftestDualHost(unittest.TestCase):
         with (
             patch("rdma_sweep._run_remote_result", side_effect=fake_run_remote_result),
             patch("rdma_sweep._wait_for_port"),
-            patch("rdma_sweep._cancel"),
+            patch("rdma_sweep._cancel", return_value={}),
         ):
             result = run_perftest(
                 binary="ib_write_bw",
@@ -495,6 +502,105 @@ class TestRunPerftestDualHost(unittest.TestCase):
 
         self.assertIn("error", result)
         self.assertIn("client run failed", result["error"])
+
+
+class TestRemoteCommandResults(unittest.TestCase):
+    """Remote command evidence stays serializable and dual-host by default."""
+
+    def test_timeout_output_bytes_are_json_serializable(self):
+        timeout = subprocess.TimeoutExpired(
+            cmd=["bash", "-c", "sleep 2"],
+            timeout=1,
+            output=b"partial stdout",
+            stderr=b"partial stderr",
+        )
+        with patch("rdma_remote.subprocess.run", side_effect=timeout):
+            result = run_local_result("sleep 2", timeout=1, sudo=False)
+
+        payload = result.to_dict()
+        json.dumps(payload)
+        self.assertEqual(payload["stdout"], "partial stdout")
+        self.assertEqual(payload["stderr"], "partial stderr")
+        self.assertTrue(payload["timed_out"])
+
+    def test_local_host_uses_ssh_unless_allow_local_is_explicit(self):
+        completed = subprocess.CompletedProcess(
+            args=["ssh"],
+            returncode=0,
+            stdout="ok",
+            stderr="",
+        )
+        with (
+            patch("rdma_remote._LOCAL_HOSTS", {"localhost"}),
+            patch("rdma_remote.subprocess.run", return_value=completed) as run,
+        ):
+            result = run_remote_result(
+                "echo ok",
+                "localhost",
+                ssh_config={"sudo": False, "connect_timeout": 1, "options": []},
+            )
+
+        self.assertTrue(result.ok)
+        self.assertEqual(run.call_args.args[0][0], "ssh")
+
+    def test_allow_local_uses_local_runner(self):
+        completed = subprocess.CompletedProcess(
+            args=["bash", "-c", "echo ok"],
+            returncode=0,
+            stdout="ok\n",
+            stderr="",
+        )
+        with (
+            patch("rdma_remote._LOCAL_HOSTS", {"localhost"}),
+            patch("rdma_remote.subprocess.run", return_value=completed) as run,
+        ):
+            result = run_remote_result(
+                "echo ok",
+                "localhost",
+                ssh_config={"sudo": False, "allow_local": True},
+            )
+
+        self.assertTrue(result.ok)
+        self.assertEqual(run.call_args.args[0][0], "bash")
+
+    def test_cancel_returns_cleanup_failure_evidence(self):
+        def fake_run_remote_result(cmd, host, **kwargs):
+            if cmd.startswith("cat "):
+                return RemoteResult(
+                    host=host,
+                    command=cmd,
+                    stdout="123\nMon Jun 22 10:00:00 2026\nrun-1\n",
+                )
+            return RemoteResult(
+                host=host,
+                command=cmd,
+                returncode=1,
+                stderr="cleanup failed for pid 123",
+            )
+
+        with patch("rdma_sweep._run_remote_result", side_effect=fake_run_remote_result):
+            evidence = _cancel(
+                "server-ssh",
+                {"sudo": True},
+                "/tmp/server.pid",
+                "/opt/perftest/ib_write_bw",
+                "run-1",
+            )
+
+        self.assertIn("pid_read", evidence)
+        self.assertIn("cleanup", evidence)
+        self.assertIn("cleanup failed", evidence["error"])
+
+
+class TestReportGeneration(unittest.TestCase):
+    """Report generation fails clearly for invalid summaries."""
+
+    def test_empty_summary_fails_clearly(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            (out / "summary.json").write_text("[]")
+            with self.assertRaisesRegex(ValueError, "no sweep entries"):
+                generate_report(str(out))
 
 
 # ---------------------------------------------------------------------------

@@ -12,6 +12,14 @@ from rdma_config import DEFAULT_SSH_CONFIG, deep_merge, parse_bool, strip_user
 _LOCAL_HOSTS: set[str] = set()
 
 
+def _as_text(value: str | bytes | None) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode(errors="replace")
+    return value
+
+
 @dataclass
 class RemoteResult:
     host: str
@@ -49,7 +57,6 @@ class RemoteResult:
 
 def init_local_hosts() -> None:
     """Populate the local-host set with this machine's hostnames/IPs."""
-    global _LOCAL_HOSTS
     hosts = {"127.0.0.1", "localhost", "::1"}
     try:
         out = subprocess.check_output(
@@ -67,7 +74,8 @@ def init_local_hosts() -> None:
             hosts.add(host.strip())
     except Exception:
         pass
-    _LOCAL_HOSTS = hosts
+    _LOCAL_HOSTS.clear()
+    _LOCAL_HOSTS.update(hosts)
 
 
 def run_local_result(
@@ -95,8 +103,8 @@ def run_local_result(
         return RemoteResult(
             host=host,
             command=cmd,
-            stdout=exc.stdout or "",
-            stderr=exc.stderr or "",
+            stdout=_as_text(exc.stdout),
+            stderr=_as_text(exc.stderr),
             returncode=124,
             timed_out=True,
         )
@@ -118,7 +126,8 @@ def run_remote_result(
     if not _LOCAL_HOSTS:
         init_local_hosts()
 
-    if host in _LOCAL_HOSTS or strip_user(host) in _LOCAL_HOSTS:
+    allow_local = parse_bool(effective_ssh.get("allow_local", False), "ssh.allow_local")
+    if allow_local and (host in _LOCAL_HOSTS or strip_user(host) in _LOCAL_HOSTS):
         return run_local_result(cmd, timeout=timeout, sudo=sudo_enabled, host=host)
 
     safe = shlex.join(["bash", "-c", cmd])
@@ -148,8 +157,8 @@ def run_remote_result(
         return RemoteResult(
             host=host,
             command=cmd,
-            stdout=exc.stdout or "",
-            stderr=exc.stderr or "",
+            stdout=_as_text(exc.stdout),
+            stderr=_as_text(exc.stderr),
             returncode=124,
             timed_out=True,
         )

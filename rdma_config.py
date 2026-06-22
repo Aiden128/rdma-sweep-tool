@@ -24,6 +24,7 @@ DEFAULT_PERFTEST_CONFIG: dict[str, Any] = {
 
 DEFAULT_SSH_CONFIG: dict[str, Any] = {
     "sudo": True,
+    "allow_local": False,
     "connect_timeout": 10,
     "options": [
         "-o", "BatchMode=yes",
@@ -150,6 +151,7 @@ def runtime_config(config: dict[str, Any]) -> dict[str, Any]:
 
     ssh = deep_merge(DEFAULT_SSH_CONFIG, config.get("ssh", {}) or {})
     ssh["sudo"] = parse_bool(ssh.get("sudo", True), "ssh.sudo")
+    ssh["allow_local"] = parse_bool(ssh.get("allow_local", False), "ssh.allow_local")
     ssh["connect_timeout"] = int(ssh.get("connect_timeout", 10))
     if isinstance(ssh.get("options"), str):
         ssh["options"] = shlex.split(str(ssh["options"]))
