@@ -1,170 +1,154 @@
 <svg xmlns='http://www.w3.org/2000/svg' width='1180' height='1120' viewBox='0 0 1180 1120' style='background:#f8fafc'>
 <text x='590.0' y='26' font-family='system-ui,sans-serif' font-size='18' font-weight='bold' fill='#1e293b' text-anchor='middle'>QP Scale RDMA Sweep</text>
-<text x='590.0' y='42' font-family='system-ui,sans-serif' font-size='12' fill='#64748b' text-anchor='middle'>Sample dual-server report with CPU and memory panels</text>
+<text x='590.0' y='42' font-family='system-ui,sans-serif' font-size='12' fill='#64748b' text-anchor='middle'>sanitized real two-node sweep - ib_write_bw</text>
 <rect x='16.0' y='56' width='566.0' height='220' rx='6' fill='#fff' stroke='#e2e8f0' stroke-width='1'/>
 <text x='299.0' y='72' font-family='system-ui,sans-serif' font-size='14' font-weight='bold' fill='#1e293b' text-anchor='middle'>Bandwidth (MB/s)</text>
 <text x='49.0' y='166.0' font-family='system-ui,sans-serif' font-size='11' fill='#64748b' text-anchor='middle' transform='rotate(-90,49.0,166.0)'>MB/s</text>
 <line x1='74.0' y1='100.0' x2='554.0' y2='100.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='68.0' y='104.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>1</text>
+<text x='68.0' y='104.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>778</text>
 <line x1='74.0' y1='133.0' x2='554.0' y2='133.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='68.0' y='137.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>1</text>
+<text x='68.0' y='137.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>583</text>
 <line x1='74.0' y1='166.0' x2='554.0' y2='166.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='68.0' y='170.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0</text>
+<text x='68.0' y='170.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>389</text>
 <line x1='74.0' y1='199.0' x2='554.0' y2='199.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='68.0' y='203.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0</text>
+<text x='68.0' y='203.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>194</text>
 <line x1='74.0' y1='232.0' x2='554.0' y2='232.0' stroke='#e2e8f0' stroke-width='1'/>
 <text x='68.0' y='236.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0</text>
 <line x1='74.0' y1='232' x2='554.0' y2='232' stroke='#94a3b8' stroke-width='1'/>
 <line x1='74.0' y1='232' x2='74.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
-<text x='74.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>2</text>
-<line x1='170.0' y1='232' x2='170.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
-<text x='170.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>4</text>
-<line x1='266.0' y1='232' x2='266.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
-<text x='266.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>8</text>
-<line x1='362.0' y1='232' x2='362.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
-<text x='362.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>16</text>
-<line x1='458.0' y1='232' x2='458.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
-<text x='458.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>32</text>
+<text x='74.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>1</text>
+<line x1='194.0' y1='232' x2='194.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
+<text x='194.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>2</text>
+<line x1='314.0' y1='232' x2='314.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
+<text x='314.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>4</text>
+<line x1='434.0' y1='232' x2='434.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
+<text x='434.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>8</text>
 <line x1='554.0' y1='232' x2='554.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
-<text x='554.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>64</text>
-<polyline points='74.0,232.0 170.0,232.0 266.0,232.0 362.0,232.0 458.0,232.0 554.0,232.0' fill='none' stroke='#2563eb' stroke-width='2.5' stroke-linejoin='round'/>
-<circle cx='74.0' cy='232.0' r='4' fill='#2563eb'/>
-<text x='74.0' y='222.0' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>0</text>
-<circle cx='170.0' cy='232.0' r='4' fill='#2563eb'/>
-<text x='170.0' y='222.0' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>0</text>
-<circle cx='266.0' cy='232.0' r='4' fill='#2563eb'/>
-<text x='266.0' y='222.0' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>0</text>
-<circle cx='362.0' cy='232.0' r='4' fill='#2563eb'/>
-<text x='362.0' y='222.0' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>0</text>
-<circle cx='458.0' cy='232.0' r='4' fill='#2563eb'/>
-<text x='458.0' y='222.0' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>0</text>
-<circle cx='554.0' cy='232.0' r='4' fill='#2563eb'/>
-<text x='554.0' y='222.0' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>0</text>
+<text x='554.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>16</text>
+<polyline points='74.0,120.99741112227143 194.0,112.0 314.0,117.91622221907848 434.0,117.71929774923254 554.0,122.03126458896261' fill='none' stroke='#2563eb' stroke-width='2.5' stroke-linejoin='round'/>
+<circle cx='74.0' cy='120.99741112227143' r='4' fill='#2563eb'/>
+<text x='74.0' y='110.99741112227143' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>654</text>
+<circle cx='194.0' cy='112.0' r='4' fill='#2563eb'/>
+<text x='194.0' y='102.0' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>707</text>
+<circle cx='314.0' cy='117.91622221907848' r='4' fill='#2563eb'/>
+<text x='314.0' y='107.91622221907848' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>672</text>
+<circle cx='434.0' cy='117.71929774923254' r='4' fill='#2563eb'/>
+<text x='434.0' y='107.71929774923254' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>673</text>
+<circle cx='554.0' cy='122.03126458896261' r='4' fill='#2563eb'/>
+<text x='554.0' y='112.03126458896261' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>648</text>
 <rect x='598.0' y='56' width='566.0' height='220' rx='6' fill='#fff' stroke='#e2e8f0' stroke-width='1'/>
 <text x='881.0' y='72' font-family='system-ui,sans-serif' font-size='14' font-weight='bold' fill='#1e293b' text-anchor='middle'>Message Rate (Mmsg/s)</text>
 <text x='631.0' y='166.0' font-family='system-ui,sans-serif' font-size='11' fill='#64748b' text-anchor='middle' transform='rotate(-90,631.0,166.0)'>Kmsg/s</text>
 <line x1='656.0' y1='100.0' x2='1136.0' y2='100.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='650.0' y='104.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>1</text>
+<text x='650.0' y='104.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>12740</text>
 <line x1='656.0' y1='133.0' x2='1136.0' y2='133.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='650.0' y='137.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>1</text>
+<text x='650.0' y='137.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>9555</text>
 <line x1='656.0' y1='166.0' x2='1136.0' y2='166.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='650.0' y='170.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0</text>
+<text x='650.0' y='170.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>6370</text>
 <line x1='656.0' y1='199.0' x2='1136.0' y2='199.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='650.0' y='203.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0</text>
+<text x='650.0' y='203.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>3185</text>
 <line x1='656.0' y1='232.0' x2='1136.0' y2='232.0' stroke='#e2e8f0' stroke-width='1'/>
 <text x='650.0' y='236.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0</text>
 <line x1='656.0' y1='232' x2='1136.0' y2='232' stroke='#94a3b8' stroke-width='1'/>
 <line x1='656.0' y1='232' x2='656.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
-<text x='656.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>2</text>
-<line x1='752.0' y1='232' x2='752.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
-<text x='752.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>4</text>
-<line x1='848.0' y1='232' x2='848.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
-<text x='848.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>8</text>
-<line x1='944.0' y1='232' x2='944.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
-<text x='944.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>16</text>
-<line x1='1040.0' y1='232' x2='1040.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
-<text x='1040.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>32</text>
+<text x='656.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>1</text>
+<line x1='776.0' y1='232' x2='776.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
+<text x='776.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>2</text>
+<line x1='896.0' y1='232' x2='896.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
+<text x='896.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>4</text>
+<line x1='1016.0' y1='232' x2='1016.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
+<text x='1016.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>8</text>
 <line x1='1136.0' y1='232' x2='1136.0' y2='236' stroke='#94a3b8' stroke-width='1'/>
-<text x='1136.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>64</text>
-<polyline points='656.0,232.0 752.0,232.0 848.0,232.0 944.0,232.0 1040.0,232.0 1136.0,232.0' fill='none' stroke='#16a34a' stroke-width='2.5' stroke-linejoin='round'/>
-<circle cx='656.0' cy='232.0' r='4' fill='#16a34a'/>
-<text x='656.0' y='222.0' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>0</text>
-<circle cx='752.0' cy='232.0' r='4' fill='#16a34a'/>
-<text x='752.0' y='222.0' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>0</text>
-<circle cx='848.0' cy='232.0' r='4' fill='#16a34a'/>
-<text x='848.0' y='222.0' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>0</text>
-<circle cx='944.0' cy='232.0' r='4' fill='#16a34a'/>
-<text x='944.0' y='222.0' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>0</text>
-<circle cx='1040.0' cy='232.0' r='4' fill='#16a34a'/>
-<text x='1040.0' y='222.0' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>0</text>
-<circle cx='1136.0' cy='232.0' r='4' fill='#16a34a'/>
-<text x='1136.0' y='222.0' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>0</text>
+<text x='1136.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>16</text>
+<polyline points='656.0,120.99810904016952 776.0,112.00000000000001 896.0,117.91707752589927 1016.0,117.71913288698623 1136.0,122.03232418822564' fill='none' stroke='#16a34a' stroke-width='2.5' stroke-linejoin='round'/>
+<circle cx='656.0' cy='120.99810904016952' r='4' fill='#16a34a'/>
+<text x='656.0' y='110.99810904016952' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>10713</text>
+<circle cx='776.0' cy='112.00000000000001' r='4' fill='#16a34a'/>
+<text x='776.0' y='102.00000000000001' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>11581</text>
+<circle cx='896.0' cy='117.91707752589927' r='4' fill='#16a34a'/>
+<text x='896.0' y='107.91707752589927' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>11010</text>
+<circle cx='1016.0' cy='117.71913288698623' r='4' fill='#16a34a'/>
+<text x='1016.0' y='107.71913288698623' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>11029</text>
+<circle cx='1136.0' cy='122.03232418822564' r='4' fill='#16a34a'/>
+<text x='1136.0' y='112.03232418822564' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>10613</text>
 <rect x='16.0' y='292' width='566.0' height='220' rx='6' fill='#fff' stroke='#e2e8f0' stroke-width='1'/>
 <text x='299.0' y='308' font-family='system-ui,sans-serif' font-size='14' font-weight='bold' fill='#1e293b' text-anchor='middle'>Average CPU Utilization</text>
 <text x='49.0' y='402.0' font-family='system-ui,sans-serif' font-size='11' fill='#64748b' text-anchor='middle' transform='rotate(-90,49.0,402.0)'>%</text>
 <line x1='74.0' y1='336.0' x2='484.0' y2='336.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='68.0' y='340.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>83.7</text>
+<text x='68.0' y='340.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>1.3</text>
 <line x1='74.0' y1='369.0' x2='484.0' y2='369.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='68.0' y='373.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>62.8</text>
+<text x='68.0' y='373.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0.9</text>
 <line x1='74.0' y1='402.0' x2='484.0' y2='402.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='68.0' y='406.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>41.9</text>
+<text x='68.0' y='406.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0.6</text>
 <line x1='74.0' y1='435.0' x2='484.0' y2='435.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='68.0' y='439.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>20.9</text>
+<text x='68.0' y='439.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0.3</text>
 <line x1='74.0' y1='468.0' x2='484.0' y2='468.0' stroke='#e2e8f0' stroke-width='1'/>
 <text x='68.0' y='472.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0.0</text>
 <line x1='74.0' y1='468' x2='484.0' y2='468' stroke='#94a3b8' stroke-width='1'/>
 <line x1='74.0' y1='468' x2='74.0' y2='472' stroke='#94a3b8' stroke-width='1'/>
-<text x='74.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>2</text>
-<line x1='156.0' y1='468' x2='156.0' y2='472' stroke='#94a3b8' stroke-width='1'/>
-<text x='156.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>4</text>
-<line x1='238.0' y1='468' x2='238.0' y2='472' stroke='#94a3b8' stroke-width='1'/>
-<text x='238.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>8</text>
-<line x1='320.0' y1='468' x2='320.0' y2='472' stroke='#94a3b8' stroke-width='1'/>
-<text x='320.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>16</text>
-<line x1='402.0' y1='468' x2='402.0' y2='472' stroke='#94a3b8' stroke-width='1'/>
-<text x='402.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>32</text>
+<text x='74.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>1</text>
+<line x1='176.5' y1='468' x2='176.5' y2='472' stroke='#94a3b8' stroke-width='1'/>
+<text x='176.5' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>2</text>
+<line x1='279.0' y1='468' x2='279.0' y2='472' stroke='#94a3b8' stroke-width='1'/>
+<text x='279.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>4</text>
+<line x1='381.5' y1='468' x2='381.5' y2='472' stroke='#94a3b8' stroke-width='1'/>
+<text x='381.5' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>8</text>
 <line x1='484.0' y1='468' x2='484.0' y2='472' stroke='#94a3b8' stroke-width='1'/>
-<text x='484.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>64</text>
-<polyline points='74.0,438.831342570473 156.0,430.1595795508839 238.0,408.40133779264215 320.0,380.96703296703294 402.0,360.15480172001907 484.0,353.2173913043478' fill='none' stroke='#dc2626' stroke-width='2.5' stroke-linejoin='round'/>
-<circle cx='74.0' cy='438.831342570473' r='3.5' fill='#dc2626'/>
-<circle cx='156.0' cy='430.1595795508839' r='3.5' fill='#dc2626'/>
-<circle cx='238.0' cy='408.40133779264215' r='3.5' fill='#dc2626'/>
-<circle cx='320.0' cy='380.96703296703294' r='3.5' fill='#dc2626'/>
-<circle cx='402.0' cy='360.15480172001907' r='3.5' fill='#dc2626'/>
-<circle cx='484.0' cy='353.2173913043478' r='3.5' fill='#dc2626'/>
+<text x='484.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>16</text>
+<polyline points='74.0,426.2608695652174 176.5,415.82608695652175 279.0,415.82608695652175 381.5,415.82608695652175 484.0,415.82608695652175' fill='none' stroke='#dc2626' stroke-width='2.5' stroke-linejoin='round'/>
+<circle cx='74.0' cy='426.2608695652174' r='3.5' fill='#dc2626'/>
+<circle cx='176.5' cy='415.82608695652175' r='3.5' fill='#dc2626'/>
+<circle cx='279.0' cy='415.82608695652175' r='3.5' fill='#dc2626'/>
+<circle cx='381.5' cy='415.82608695652175' r='3.5' fill='#dc2626'/>
+<circle cx='484.0' cy='415.82608695652175' r='3.5' fill='#dc2626'/>
 <rect x='498.0' y='340' width='10' height='10' fill='#dc2626' rx='2'/>
 <text x='514.0' y='350' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b'>server</text>
-<polyline points='74.0,441.35403726708074 156.0,433.1552795031056 238.0,412.18537983755374 320.0,389.79646440516 402.0,376.7099856665074 484.0,371.50692785475394' fill='none' stroke='#0891b2' stroke-width='2.5' stroke-linejoin='round'/>
-<circle cx='74.0' cy='441.35403726708074' r='3.5' fill='#0891b2'/>
-<circle cx='156.0' cy='433.1552795031056' r='3.5' fill='#0891b2'/>
-<circle cx='238.0' cy='412.18537983755374' r='3.5' fill='#0891b2'/>
-<circle cx='320.0' cy='389.79646440516' r='3.5' fill='#0891b2'/>
-<circle cx='402.0' cy='376.7099856665074' r='3.5' fill='#0891b2'/>
-<circle cx='484.0' cy='371.50692785475394' r='3.5' fill='#0891b2'/>
+<polyline points='74.0,384.52173913043475 176.5,384.52173913043475 279.0,353.2173913043478 381.5,363.6521739130435 484.0,374.0869565217391' fill='none' stroke='#0891b2' stroke-width='2.5' stroke-linejoin='round'/>
+<circle cx='74.0' cy='384.52173913043475' r='3.5' fill='#0891b2'/>
+<circle cx='176.5' cy='384.52173913043475' r='3.5' fill='#0891b2'/>
+<circle cx='279.0' cy='353.2173913043478' r='3.5' fill='#0891b2'/>
+<circle cx='381.5' cy='363.6521739130435' r='3.5' fill='#0891b2'/>
+<circle cx='484.0' cy='374.0869565217391' r='3.5' fill='#0891b2'/>
 <rect x='498.0' y='358' width='10' height='10' fill='#0891b2' rx='2'/>
 <text x='514.0' y='368' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b'>client</text>
 <rect x='598.0' y='292' width='566.0' height='220' rx='6' fill='#fff' stroke='#e2e8f0' stroke-width='1'/>
 <text x='881.0' y='308' font-family='system-ui,sans-serif' font-size='14' font-weight='bold' fill='#1e293b' text-anchor='middle'>Host Memory Pressure Delta</text>
 <text x='631.0' y='402.0' font-family='system-ui,sans-serif' font-size='11' fill='#64748b' text-anchor='middle' transform='rotate(-90,631.0,402.0)'>MiB</text>
 <line x1='656.0' y1='336.0' x2='1066.0' y2='336.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='650.0' y='340.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>1.0</text>
+<text x='650.0' y='340.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>50.3</text>
 <line x1='656.0' y1='369.0' x2='1066.0' y2='369.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='650.0' y='373.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0.8</text>
+<text x='650.0' y='373.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>37.7</text>
 <line x1='656.0' y1='402.0' x2='1066.0' y2='402.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='650.0' y='406.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0.5</text>
+<text x='650.0' y='406.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>25.1</text>
 <line x1='656.0' y1='435.0' x2='1066.0' y2='435.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='650.0' y='439.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0.2</text>
+<text x='650.0' y='439.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>12.6</text>
 <line x1='656.0' y1='468.0' x2='1066.0' y2='468.0' stroke='#e2e8f0' stroke-width='1'/>
 <text x='650.0' y='472.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0.0</text>
 <line x1='656.0' y1='468' x2='1066.0' y2='468' stroke='#94a3b8' stroke-width='1'/>
 <line x1='656.0' y1='468' x2='656.0' y2='472' stroke='#94a3b8' stroke-width='1'/>
-<text x='656.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>2</text>
-<line x1='738.0' y1='468' x2='738.0' y2='472' stroke='#94a3b8' stroke-width='1'/>
-<text x='738.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>4</text>
-<line x1='820.0' y1='468' x2='820.0' y2='472' stroke='#94a3b8' stroke-width='1'/>
-<text x='820.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>8</text>
-<line x1='902.0' y1='468' x2='902.0' y2='472' stroke='#94a3b8' stroke-width='1'/>
-<text x='902.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>16</text>
-<line x1='984.0' y1='468' x2='984.0' y2='472' stroke='#94a3b8' stroke-width='1'/>
-<text x='984.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>32</text>
+<text x='656.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>1</text>
+<line x1='758.5' y1='468' x2='758.5' y2='472' stroke='#94a3b8' stroke-width='1'/>
+<text x='758.5' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>2</text>
+<line x1='861.0' y1='468' x2='861.0' y2='472' stroke='#94a3b8' stroke-width='1'/>
+<text x='861.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>4</text>
+<line x1='963.5' y1='468' x2='963.5' y2='472' stroke='#94a3b8' stroke-width='1'/>
+<text x='963.5' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>8</text>
 <line x1='1066.0' y1='468' x2='1066.0' y2='472' stroke='#94a3b8' stroke-width='1'/>
-<text x='1066.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>64</text>
-<polyline points='656.0,468.0 738.0,468.0 820.0,468.0 902.0,468.0 984.0,468.0 1066.0,468.0' fill='none' stroke='#ca8a04' stroke-width='2.5' stroke-linejoin='round'/>
-<circle cx='656.0' cy='468.0' r='3.5' fill='#ca8a04'/>
-<circle cx='738.0' cy='468.0' r='3.5' fill='#ca8a04'/>
-<circle cx='820.0' cy='468.0' r='3.5' fill='#ca8a04'/>
-<circle cx='902.0' cy='468.0' r='3.5' fill='#ca8a04'/>
-<circle cx='984.0' cy='468.0' r='3.5' fill='#ca8a04'/>
-<circle cx='1066.0' cy='468.0' r='3.5' fill='#ca8a04'/>
+<text x='1066.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>16</text>
+<polyline points='656.0,353.2173913043478 758.5,441.733956705575 861.0,452.7656968931736 963.5,409.95204582227586 1066.0,496.6299861889532' fill='none' stroke='#ca8a04' stroke-width='2.5' stroke-linejoin='round'/>
+<circle cx='656.0' cy='353.2173913043478' r='3.5' fill='#ca8a04'/>
+<circle cx='758.5' cy='441.733956705575' r='3.5' fill='#ca8a04'/>
+<circle cx='861.0' cy='452.7656968931736' r='3.5' fill='#ca8a04'/>
+<circle cx='963.5' cy='409.95204582227586' r='3.5' fill='#ca8a04'/>
+<circle cx='1066.0' cy='496.6299861889532' r='3.5' fill='#ca8a04'/>
 <rect x='1080.0' y='340' width='10' height='10' fill='#ca8a04' rx='2'/>
 <text x='1096.0' y='350' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b'>server</text>
-<polyline points='656.0,468.0 738.0,468.0 820.0,468.0 902.0,468.0 984.0,468.0 1066.0,468.0' fill='none' stroke='#9333ea' stroke-width='2.5' stroke-linejoin='round'/>
-<circle cx='656.0' cy='468.0' r='3.5' fill='#9333ea'/>
-<circle cx='738.0' cy='468.0' r='3.5' fill='#9333ea'/>
-<circle cx='820.0' cy='468.0' r='3.5' fill='#9333ea'/>
-<circle cx='902.0' cy='468.0' r='3.5' fill='#9333ea'/>
-<circle cx='984.0' cy='468.0' r='3.5' fill='#9333ea'/>
-<circle cx='1066.0' cy='468.0' r='3.5' fill='#9333ea'/>
+<polyline points='656.0,406.0121393281121 758.5,482.70898274192297 861.0,394.45507877561005 963.5,451.18973329353804 1066.0,499.51925195331' fill='none' stroke='#9333ea' stroke-width='2.5' stroke-linejoin='round'/>
+<circle cx='656.0' cy='406.0121393281121' r='3.5' fill='#9333ea'/>
+<circle cx='758.5' cy='482.70898274192297' r='3.5' fill='#9333ea'/>
+<circle cx='861.0' cy='394.45507877561005' r='3.5' fill='#9333ea'/>
+<circle cx='963.5' cy='451.18973329353804' r='3.5' fill='#9333ea'/>
+<circle cx='1066.0' cy='499.51925195331' r='3.5' fill='#9333ea'/>
 <rect x='1080.0' y='358' width='10' height='10' fill='#9333ea' rx='2'/>
 <text x='1096.0' y='368' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b'>client</text>
 <rect x='16' y='528' width='1148' height='250' rx='6' fill='#fff' stroke='#e2e8f0' stroke-width='1'/>
@@ -181,25 +165,222 @@
 <line x1='74' y1='734.0' x2='996' y2='734.0' stroke='#e2e8f0' stroke-width='1'/>
 <text x='68' y='738.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0</text>
 <line x1='74' y1='734' x2='996' y2='734' stroke='#94a3b8' stroke-width='1'/>
-<text x='187.85714285714286' y='752' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>2</text>
-<text x='326.7142857142857' y='752' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>4</text>
-<text x='465.57142857142856' y='752' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>8</text>
-<text x='604.4285714285714' y='752' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>16</text>
-<text x='743.2857142857143' y='752' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>32</text>
-<text x='882.1428571428572' y='752' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>64</text>
-<rect x='16' y='794' width='1148' height='198' rx='6' fill='#fff' stroke='#e2e8f0' stroke-width='1'/>
+<text x='211.0' y='752' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>1</text>
+<text x='373.0' y='752' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>2</text>
+<text x='535.0' y='752' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>4</text>
+<text x='697.0' y='752' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>8</text>
+<text x='859.0' y='752' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>16</text>
+<rect x='16' y='794' width='1148' height='174' rx='6' fill='#fff' stroke='#e2e8f0' stroke-width='1'/>
 <text x='590.0' y='810' font-family='system-ui,sans-serif' font-size='14' font-weight='bold' fill='#1e293b' text-anchor='middle'>Server Per-Core CPU Utilization (%)</text>
-<rect x='24.0' y='826' width='1132.0' height='24' fill='#f1f5f9'/>
-<text x='590.0' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>QP</text>
-<line x1='24.0' y1='826' x2='24.0' y2='994' stroke='#e2e8f0' stroke-width='0.5'/>
-<line x1='1156.0' y1='826' x2='1156.0' y2='994' stroke='#e2e8f0' stroke-width='0.5'/>
-<text x='590.0' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>2</text>
-<rect x='24.0' y='874' width='1132.0' height='24' fill='#f8fafc'/>
-<text x='590.0' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>4</text>
-<text x='590.0' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>8</text>
-<rect x='24.0' y='922' width='1132.0' height='24' fill='#f8fafc'/>
-<text x='590.0' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>16</text>
-<text x='590.0' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>32</text>
-<rect x='24.0' y='970' width='1132.0' height='24' fill='#f8fafc'/>
-<text x='590.0' y='986' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>64</text>
+<rect x='24.0' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='50.95238095238095' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>QP</text>
+<line x1='24.0' y1='826' x2='24.0' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='77.9047619047619' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='104.85714285714285' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu0</text>
+<line x1='77.9047619047619' y1='826' x2='77.9047619047619' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='131.8095238095238' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='158.76190476190476' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu1</text>
+<line x1='131.8095238095238' y1='826' x2='131.8095238095238' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='185.71428571428572' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='212.66666666666669' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu2</text>
+<line x1='185.71428571428572' y1='826' x2='185.71428571428572' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='239.61904761904762' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='266.57142857142856' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu3</text>
+<line x1='239.61904761904762' y1='826' x2='239.61904761904762' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='293.5238095238095' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='320.4761904761905' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu4</text>
+<line x1='293.5238095238095' y1='826' x2='293.5238095238095' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='347.42857142857144' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='374.3809523809524' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu5</text>
+<line x1='347.42857142857144' y1='826' x2='347.42857142857144' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='401.3333333333333' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='428.2857142857143' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu6</text>
+<line x1='401.3333333333333' y1='826' x2='401.3333333333333' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='455.23809523809524' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='482.1904761904762' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu7</text>
+<line x1='455.23809523809524' y1='826' x2='455.23809523809524' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='509.14285714285717' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='536.0952380952381' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu8</text>
+<line x1='509.14285714285717' y1='826' x2='509.14285714285717' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='563.047619047619' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='590.0' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu9</text>
+<line x1='563.047619047619' y1='826' x2='563.047619047619' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='616.952380952381' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='643.9047619047619' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu10</text>
+<line x1='616.952380952381' y1='826' x2='616.952380952381' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='670.8571428571429' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='697.8095238095239' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu11</text>
+<line x1='670.8571428571429' y1='826' x2='670.8571428571429' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='724.7619047619048' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='751.7142857142858' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu12</text>
+<line x1='724.7619047619048' y1='826' x2='724.7619047619048' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='778.6666666666666' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='805.6190476190476' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu13</text>
+<line x1='778.6666666666666' y1='826' x2='778.6666666666666' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='832.5714285714286' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='859.5238095238095' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu14</text>
+<line x1='832.5714285714286' y1='826' x2='832.5714285714286' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='886.4761904761905' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='913.4285714285714' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu15</text>
+<line x1='886.4761904761905' y1='826' x2='886.4761904761905' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='940.3809523809524' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='967.3333333333334' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu16</text>
+<line x1='940.3809523809524' y1='826' x2='940.3809523809524' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='994.2857142857143' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='1021.2380952380953' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu17</text>
+<line x1='994.2857142857143' y1='826' x2='994.2857142857143' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='1048.1904761904761' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='1075.142857142857' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu18</text>
+<line x1='1048.1904761904761' y1='826' x2='1048.1904761904761' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<rect x='1102.095238095238' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>
+<text x='1129.047619047619' y='842' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>cpu19</text>
+<line x1='1102.095238095238' y1='826' x2='1102.095238095238' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<line x1='1156.0' y1='826' x2='1156.0' y2='970' stroke='#e2e8f0' stroke-width='0.5'/>
+<text x='50.95238095238095' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>1</text>
+<text x='104.85714285714285' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.7</text>
+<text x='158.76190476190476' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.8</text>
+<text x='212.66666666666669' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.8</text>
+<text x='266.57142857142856' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.6</text>
+<text x='320.4761904761905' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.9</text>
+<text x='374.3809523809524' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.5</text>
+<text x='428.2857142857143' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.2</text>
+<text x='482.1904761904762' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.3</text>
+<text x='536.0952380952381' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.2</text>
+<text x='590.0' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.3</text>
+<text x='643.9047619047619' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>1.9</text>
+<text x='697.8095238095239' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.5</text>
+<text x='751.7142857142858' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.6</text>
+<text x='805.6190476190476' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.4</text>
+<text x='859.5238095238095' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.2</text>
+<text x='913.4285714285714' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<text x='967.3333333333334' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<text x='1021.2380952380953' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<text x='1075.142857142857' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<text x='1129.047619047619' y='866' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<rect x='24.0' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='50.95238095238095' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>2</text>
+<rect x='77.9047619047619' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='104.85714285714285' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>1.0</text>
+<rect x='131.8095238095238' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='158.76190476190476' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.9</text>
+<rect x='185.71428571428572' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='212.66666666666669' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.6</text>
+<rect x='239.61904761904762' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='266.57142857142856' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.8</text>
+<rect x='293.5238095238095' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='320.4761904761905' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.7</text>
+<rect x='347.42857142857144' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='374.3809523809524' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.6</text>
+<rect x='401.3333333333333' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='428.2857142857143' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.4</text>
+<rect x='455.23809523809524' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='482.1904761904762' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.3</text>
+<rect x='509.14285714285717' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='536.0952380952381' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.3</text>
+<rect x='563.047619047619' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='590.0' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.3</text>
+<rect x='616.952380952381' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='643.9047619047619' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>1.9</text>
+<rect x='670.8571428571429' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='697.8095238095239' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.1</text>
+<rect x='724.7619047619048' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='751.7142857142858' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.6</text>
+<rect x='778.6666666666666' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='805.6190476190476' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.7</text>
+<rect x='832.5714285714286' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='859.5238095238095' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.3</text>
+<rect x='886.4761904761905' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='913.4285714285714' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<rect x='940.3809523809524' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='967.3333333333334' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<rect x='994.2857142857143' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='1021.2380952380953' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<rect x='1048.1904761904761' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='1075.142857142857' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<rect x='1102.095238095238' y='874' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='1129.047619047619' y='890' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<text x='50.95238095238095' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>4</text>
+<text x='104.85714285714285' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>1.1</text>
+<text x='158.76190476190476' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>1.1</text>
+<text x='212.66666666666669' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.8</text>
+<text x='266.57142857142856' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.9</text>
+<text x='320.4761904761905' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.9</text>
+<text x='374.3809523809524' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>1.0</text>
+<text x='428.2857142857143' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.7</text>
+<text x='482.1904761904762' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.3</text>
+<text x='536.0952380952381' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.4</text>
+<text x='590.0' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.3</text>
+<text x='643.9047619047619' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>1.9</text>
+<text x='697.8095238095239' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.3</text>
+<text x='751.7142857142858' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.6</text>
+<text x='805.6190476190476' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.2</text>
+<text x='859.5238095238095' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.1</text>
+<text x='913.4285714285714' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<text x='967.3333333333334' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<text x='1021.2380952380953' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<text x='1075.142857142857' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<text x='1129.047619047619' y='914' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<rect x='24.0' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='50.95238095238095' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>8</text>
+<rect x='77.9047619047619' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='104.85714285714285' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.9</text>
+<rect x='131.8095238095238' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='158.76190476190476' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>1.0</text>
+<rect x='185.71428571428572' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='212.66666666666669' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>1.0</text>
+<rect x='239.61904761904762' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='266.57142857142856' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.8</text>
+<rect x='293.5238095238095' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='320.4761904761905' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.8</text>
+<rect x='347.42857142857144' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='374.3809523809524' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.6</text>
+<rect x='401.3333333333333' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='428.2857142857143' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.4</text>
+<rect x='455.23809523809524' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='482.1904761904762' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.3</text>
+<rect x='509.14285714285717' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='536.0952380952381' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.7</text>
+<rect x='563.047619047619' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='590.0' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.4</text>
+<rect x='616.952380952381' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='643.9047619047619' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>1.9</text>
+<rect x='670.8571428571429' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='697.8095238095239' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.3</text>
+<rect x='724.7619047619048' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='751.7142857142858' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.2</text>
+<rect x='778.6666666666666' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='805.6190476190476' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.2</text>
+<rect x='832.5714285714286' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='859.5238095238095' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.1</text>
+<rect x='886.4761904761905' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='913.4285714285714' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<rect x='940.3809523809524' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='967.3333333333334' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<rect x='994.2857142857143' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='1021.2380952380953' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<rect x='1048.1904761904761' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='1075.142857142857' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<rect x='1102.095238095238' y='922' width='53.904761904761905' height='24' fill='#f8fafc'/>
+<text x='1129.047619047619' y='938' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<text x='50.95238095238095' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='bold' fill='#1e293b' text-anchor='middle'>16</text>
+<text x='104.85714285714285' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>1.4</text>
+<text x='158.76190476190476' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.9</text>
+<text x='212.66666666666669' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.7</text>
+<text x='266.57142857142856' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.8</text>
+<text x='320.4761904761905' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.6</text>
+<text x='374.3809523809524' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.3</text>
+<text x='428.2857142857143' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.8</text>
+<text x='482.1904761904762' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.5</text>
+<text x='536.0952380952381' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.5</text>
+<text x='590.0' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.4</text>
+<text x='643.9047619047619' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>2.0</text>
+<text x='697.8095238095239' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.5</text>
+<text x='751.7142857142858' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.6</text>
+<text x='805.6190476190476' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.5</text>
+<text x='859.5238095238095' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.1</text>
+<text x='913.4285714285714' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<text x='967.3333333333334' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<text x='1021.2380952380953' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<text x='1075.142857142857' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
+<text x='1129.047619047619' y='962' font-family='system-ui,sans-serif' font-size='11' font-weight='normal' fill='#1e293b' text-anchor='middle'>0.0</text>
 </svg>

@@ -1,40 +1,33 @@
 # RDMA Sweep Tool
 
-`rdma_sweep.py` runs Linux `perftest` sweeps across two machines:
+Run Linux `perftest` sweeps across two hosts and generate an SVG report.
 
-- **server host**: starts the selected `ib_*` binary in server mode
-- **client host**: runs the matching client command against the server RDMA address
+The tool starts the selected `ib_*` binary on the server host, runs the matching
+client command against the server RDMA data-plane address, collects host CPU and
+memory snapshots from both machines, and writes JSON/CSV/SVG output.
 
-This is not a local SoftRoCE loopback runner.  Sweep mode requires distinct
-server/client SSH hosts and an explicit `server.address` for the RDMA data path.
-Loopback addresses such as `127.0.0.1` are rejected.
+## Requirements
 
-## Output
+- Python 3.10+
+- `pyyaml` on the controller host
+- SSH access from the controller host to both test hosts
+- `perftest` installed on both test hosts
+- `ss`, `/usr/bin/time`, and `/proc` available on both test hosts
+- `perf` and sudo access on the server host only when `perftest.perf_record` is enabled
 
-Each sweep point records:
+Install the Python dependency:
 
-- perftest JSON metrics such as `BW_average`, `MsgRate`, and `MsgSize`
-- server-side `perf record -g` symbols, when enabled
-- server and client CPU snapshots from `/proc/stat`
-- server and client host-level memory snapshots from `/proc/meminfo`
-- client `/usr/bin/time` output
+```bash
+python3 -m pip install pyyaml
+```
 
-The SVG report includes bandwidth, message rate, server/client average CPU,
-server/client host memory-pressure delta, top server CPU symbols, and server
-per-core CPU.
+## Configuration
 
-![sample report](examples/qp_scale/chart.svg)
-
-The checked-in SVG is sample report output.  Use your generated `summary.json`
-and `result.json` files for real bottleneck conclusions.
-
-## Generic Config
-
-Start from `examples/qp_scale/config.yaml`:
+Start from [examples/qp_scale/config.yaml](examples/qp_scale/config.yaml).
 
 ```yaml
 test: ib_write_bw
-duration: 10
+duration: 2
 
 server:
   host: rdma-server.example.com
@@ -45,17 +38,9 @@ client:
 
 perftest:
   dir: /opt/perftest
-  tmp_dir: /tmp/rdma_sweep_{run_id}
-  json_file: "{tmp_dir}/perftest_out.json"
-  time_file: "{tmp_dir}/perftest_time.out"
-  server_pid_file: "{tmp_dir}/perftest_server.pid"
-  server_log_file: "{tmp_dir}/perftest_server.log"
-  perf_data: "{tmp_dir}/perftest_perf.data"
-  perf_pid_file: "{tmp_dir}/perftest_perf.pid"
-  perf_record: true
+  perf_record: false
   wait_timeout: 30
   default_port: 18515
-  env: {}
 
 ssh:
   sudo: true
@@ -64,31 +49,24 @@ ssh:
 
 fixed:
   port: 18515
-  msg_size: 64K
+  msg_size: 64
+  device: roce-device-name
+  gid_index: 5
+  force_link: Ethernet
 
 sweep:
   - name: qp
-    values: [2, 4, 8, 16, 32, 64, 128]
+    values: [1, 2, 4, 8, 16]
 ```
 
-`server.host` and `client.host` are SSH targets.  `server.address` is the RDMA
-address passed to the client perftest command; it may be different from the SSH
-hostname on multi-NIC machines.
+`server.host` and `client.host` are SSH targets. `server.address` is the RDMA
+data-plane address passed to the client perftest command. The tool rejects
+loopback addresses and same-host client/server configurations.
 
-The default temporary paths use `{run_id}` so old PID/log/JSON files are not
-reused across runs.  Keep that pattern for normal use; fixed PID paths are
-supported for compatibility, but they are inherently less safe when another
-matching perftest binary is already running.
+`perftest.dir` must point to the directory containing the selected binary, for
+example `/usr/bin` when `ib_write_bw` is installed as `/usr/bin/ib_write_bw`.
 
 ## Run
-
-Install the local dependency on the controller machine:
-
-```bash
-python3 -m pip install pyyaml
-```
-
-Run a sweep:
 
 ```bash
 python3 rdma_sweep.py \
@@ -96,7 +74,7 @@ python3 rdma_sweep.py \
   --output-dir results/qp_scale
 ```
 
-Generate or refresh the report:
+Regenerate the report from an existing result directory:
 
 ```bash
 python3 rdma_sweep.py --report results/qp_scale
@@ -116,135 +94,66 @@ results/qp_scale/
   chart.pdf    # only when cairosvg is installed
 ```
 
-## Preflight Checks
+## RoCE Setup Notes
 
-Replace the environment variables with your lab hosts:
+For RoCE, perftest still uses a TCP control connection to exchange QP
+information before RDMA traffic starts. Assign the test IP to the Ethernet
+netdev backing the RDMA device, then use that IP as `server.address`.
 
-```bash
-export RDMA_SWEEP_SERVER_SSH='server-user@server-host'
-export RDMA_SWEEP_CLIENT_SSH='client-user@client-host'
-export RDMA_SWEEP_SERVER_ADDR='server-rdma-address'
-export RDMA_SWEEP_PERFTEST_DIR='/opt/perftest'
-export RDMA_SWEEP_TEST='ib_write_bw'
-export RDMA_SWEEP_DEVICE='roce-device-name'
-export RDMA_SWEEP_GID_INDEX='gid-index'
-export RDMA_SWEEP_FORCE_LINK='Ethernet'
-```
-
-`server-rdma-address` must be assigned to the Ethernet netdev backing the RDMA
-device, not to an unrelated management network.  Confirm the mapping with
-`rdma link`; for example, if it shows `roceP2p1s0f1/1 ... netdev
-enP2p1s0f1np1`, configure the IP on `enP2p1s0f1np1` and use
-`device: roceP2p1s0f1` in the sweep config.  After assigning the IP, run
-`show_gids` and use the RoCEv2 GID index for that IPv4 address.
-
-Check SSH and remote prerequisites:
+Find the RDMA device to netdev mapping:
 
 ```bash
-SSH_OPTS=(-o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new)
-
-for h in "$RDMA_SWEEP_SERVER_SSH" "$RDMA_SWEEP_CLIENT_SSH"; do
-  ssh "${SSH_OPTS[@]}" "$h" '
-    hostname
-    id
-    python3 --version
-    command -v ss
-    test -x /usr/bin/time
-    command -v ibv_devices >/dev/null 2>&1 && ibv_devices || true
-    command -v rdma >/dev/null 2>&1 && rdma link || true
-    command -v show_gids >/dev/null 2>&1 && show_gids || true
-  '
-done
-
-ssh "${SSH_OPTS[@]}" "$RDMA_SWEEP_SERVER_SSH" \
-  "test -x \"$RDMA_SWEEP_PERFTEST_DIR/$RDMA_SWEEP_TEST\" && command -v perf && sudo -n true"
-
-ssh "${SSH_OPTS[@]}" "$RDMA_SWEEP_CLIENT_SSH" \
-  "test -x \"$RDMA_SWEEP_PERFTEST_DIR/$RDMA_SWEEP_TEST\" && sudo -n true"
-
-ssh "${SSH_OPTS[@]}" "$RDMA_SWEEP_CLIENT_SSH" \
-  "ip route get \"$RDMA_SWEEP_SERVER_ADDR\""
-
-ssh "${SSH_OPTS[@]}" "$RDMA_SWEEP_CLIENT_SSH" \
-  "ping -c 3 \"$RDMA_SWEEP_SERVER_ADDR\""
+rdma link
 ```
 
-If `sudo -n true` fails, either configure passwordless sudo for the required
-commands or set `ssh.sudo: false` and disable `perftest.perf_record`.
+Example output:
 
-## Minimal Smoke Config
+```text
+link roceP2p1s0f1/1 state ACTIVE physical_state LINK_UP netdev enP2p1s0f1np1
+```
 
-Generate a local smoke-test YAML without committing lab-specific hosts.  These
-values are shell variables so the example does not bake lab policy into the
-repository:
+In that case, assign the data-plane IP to `enP2p1s0f1np1` and use
+`device: roceP2p1s0f1` in the sweep config.
+
+Find the RoCEv2 GID index for the assigned IP:
 
 ```bash
-export RDMA_SWEEP_DURATION="${RDMA_SWEEP_DURATION:-2}"
-export RDMA_SWEEP_PORT="${RDMA_SWEEP_PORT:-18515}"
-export RDMA_SWEEP_MSG_SIZE="${RDMA_SWEEP_MSG_SIZE:-64}"
-export RDMA_SWEEP_QP="${RDMA_SWEEP_QP:-1}"
-export RDMA_SWEEP_SUDO="${RDMA_SWEEP_SUDO:-true}"
-export RDMA_SWEEP_SSH_CONNECT_TIMEOUT="${RDMA_SWEEP_SSH_CONNECT_TIMEOUT:-10}"
-
-cat >/tmp/rdma-sweep-smoke.yaml <<YAML
-test: ${RDMA_SWEEP_TEST}
-duration: ${RDMA_SWEEP_DURATION}
-
-server:
-  host: ${RDMA_SWEEP_SERVER_SSH}
-  address: ${RDMA_SWEEP_SERVER_ADDR}
-
-client:
-  host: ${RDMA_SWEEP_CLIENT_SSH}
-
-perftest:
-  dir: ${RDMA_SWEEP_PERFTEST_DIR}
-
-ssh:
-  sudo: ${RDMA_SWEEP_SUDO}
-  connect_timeout: ${RDMA_SWEEP_SSH_CONNECT_TIMEOUT}
-  options: [-o, BatchMode=yes, -o, StrictHostKeyChecking=accept-new]
-
-fixed:
-  port: ${RDMA_SWEEP_PORT}
-  msg_size: ${RDMA_SWEEP_MSG_SIZE}
-  device: ${RDMA_SWEEP_DEVICE}
-  gid_index: ${RDMA_SWEEP_GID_INDEX}
-  force_link: ${RDMA_SWEEP_FORCE_LINK}
-
-sweep:
-  - name: qp
-    values: [${RDMA_SWEEP_QP}]
-YAML
+show_gids
 ```
 
-Run it:
+Use that index as `gid_index`.
+
+Basic preflight checks:
 
 ```bash
-rm -rf /tmp/rdma-sweep-smoke-results
-python3 rdma_sweep.py -c /tmp/rdma-sweep-smoke.yaml -o /tmp/rdma-sweep-smoke-results
-python3 rdma_sweep.py --report /tmp/rdma-sweep-smoke-results
+SERVER_SSH=rdma-server.example.com
+CLIENT_SSH=rdma-client.example.com
+SERVER_ADDR=rdma-server-data.example.com
+PERFTEST_DIR=/opt/perftest
+TEST=ib_write_bw
+
+ssh "$SERVER_SSH" "test -x $PERFTEST_DIR/$TEST && ss -H -tln >/dev/null"
+ssh "$CLIENT_SSH" "test -x $PERFTEST_DIR/$TEST && /usr/bin/time true"
+ssh "$CLIENT_SSH" "ip route get $SERVER_ADDR && ping -c 3 $SERVER_ADDR"
 ```
 
-Verify the expected fields:
+## Report
 
-```bash
-python3 - <<'PY'
-import json
-from pathlib import Path
+The SVG report includes:
 
-out = Path('/tmp/rdma-sweep-smoke-results')
-summary = json.loads((out / 'summary.json').read_text())
-assert len(summary) == 1, summary
-assert not summary[0].get('error'), summary[0].get('error')
-for key in ('server_cpu_per_core', 'client_cpu_per_core', 'server_memory', 'client_memory'):
-    assert summary[0].get(key), key
-svg = (out / 'chart.svg').read_text()
-for label in ('Average CPU Utilization', 'Host Memory Pressure Delta', 'Server Per-Core CPU Utilization'):
-    assert label in svg, label
-print('smoke-ok')
-PY
-```
+- bandwidth
+- message rate
+- server and client average CPU utilization
+- server and client host memory-pressure delta
+- server per-core CPU utilization
+- top server CPU symbols when `perftest.perf_record` is enabled
+
+![QP scale report](examples/qp_scale/chart.svg)
+
+The files under [examples/qp_scale](examples/qp_scale) are sanitized output from
+a real two-host run. Hostnames, addresses, device name, and port were replaced
+with generic values; measured bandwidth, message rate, CPU, and memory values
+come from the run.
 
 ## Sweep Parameters
 

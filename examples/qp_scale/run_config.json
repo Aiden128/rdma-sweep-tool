@@ -1,6 +1,7 @@
 {
   "test": "ib_write_bw",
-  "duration": 10,
+  "duration": 2,
+  "use_gpu": false,
   "server": {
     "host": "rdma-server.example.com",
     "address": "rdma-server-data.example.com"
@@ -8,8 +9,33 @@
   "client": {
     "host": "rdma-client.example.com"
   },
+  "perftest": {
+    "dir": "/opt/perftest",
+    "rdma_core_lib": "",
+    "env": {},
+    "tmp_dir": "/tmp/rdma_sweep_{run_id}",
+    "json_file": "{tmp_dir}/perftest_out.json",
+    "time_file": "{tmp_dir}/perftest_time.out",
+    "server_pid_file": "{tmp_dir}/perftest_server.pid",
+    "server_log_file": "{tmp_dir}/perftest_server.log",
+    "perf_data": "{tmp_dir}/perftest_perf.data",
+    "perf_pid_file": "{tmp_dir}/perftest_perf.pid",
+    "perf_record": false,
+    "wait_timeout": 30,
+    "default_port": 18515
+  },
+  "ssh": {
+    "sudo": true,
+    "connect_timeout": 10,
+    "options": [
+      "-o",
+      "BatchMode=yes",
+      "-o",
+      "StrictHostKeyChecking=accept-new"
+    ]
+  },
   "report": {
     "title": "QP Scale RDMA Sweep",
-    "subtitle": "Sample dual-server report with CPU and memory panels"
+    "subtitle": "sanitized real two-node sweep - ib_write_bw"
   }
 }
