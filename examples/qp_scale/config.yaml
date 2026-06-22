@@ -1,10 +1,48 @@
 test: ib_write_bw
-server_host: 127.0.0.1
-perftest_dir: /tmp/perftest
 duration: 10
+
+server:
+  # SSH target for the host that runs the perftest server process.
+  host: rdma-server.example.com
+  # RDMA/data-plane address passed to the client perftest command.
+  address: rdma-server-data.example.com
+
+client:
+  # SSH target for the host that runs the perftest client.
+  host: rdma-client.example.com
+
+perftest:
+  dir: /opt/perftest
+  rdma_core_lib: ""
+  tmp_dir: /tmp/rdma_sweep_{run_id}
+  json_file: "{tmp_dir}/perftest_out.json"
+  time_file: "{tmp_dir}/perftest_time.out"
+  server_pid_file: "{tmp_dir}/perftest_server.pid"
+  server_log_file: "{tmp_dir}/perftest_server.log"
+  perf_data: "{tmp_dir}/perftest_perf.data"
+  perf_pid_file: "{tmp_dir}/perftest_perf.pid"
+  perf_record: true
+  wait_timeout: 30
+  default_port: 18515
+  env: {}
+
+ssh:
+  sudo: true
+  connect_timeout: 10
+  options:
+    - -o
+    - BatchMode=yes
+    - -o
+    - StrictHostKeyChecking=accept-new
+
+report:
+  title: QP Scale RDMA Sweep
+  subtitle: rdma-client.example.com -> rdma-server-data.example.com - ib_write_bw
+
 fixed:
   port: 18515
   msg_size: 64K
+
 sweep:
   - name: qp
     values: [2, 4, 8, 16, 32, 64, 128]

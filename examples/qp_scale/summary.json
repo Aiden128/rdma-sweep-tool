@@ -1,254 +1,626 @@
 [
   {
+    "index": 1,
     "params": {
       "port": 18515,
       "msg_size": "64K",
       "qp": 2
     },
-    "error": null,
-    "elapsed_sec": 13.59,
-    "cpu_per_core": {
-      "cpu": 8.059767407625495,
-      "cpu0": 0.14727540500736325,
-      "cpu1": 0.14716703458425018,
-      "cpu2": 0.14716703458425018,
-      "cpu3": 0.14705882352941124,
-      "cpu4": 3.9705882352941146,
-      "cpu5": 0.1474926253687281,
-      "cpu6": 0.14727540500736325,
-      "cpu7": 0.14738393515106862,
-      "cpu8": 0.07352941176470562,
-      "cpu9": 75.36764705882352
+    "server_host": "rdma-server.example.com",
+    "server_address": "rdma-server-data.example.com",
+    "client_host": "rdma-client.example.com",
+    "perftest": {
+      "BW_average": 18200,
+      "MsgRate": 0.29,
+      "MsgSize": 65536,
+      "t_avg": 4.2,
+      "t_min": 3.1,
+      "t_max": 6.3
     },
-    "memory": {
-      "MemTotal": "15.6G",
-      "MemFree": "8.7G",
-      "MemUsed": "1.1G",
-      "Buffers": "318.6M",
-      "Cached": "5.5G",
-      "MemUsedDelta": "24.2M",
-      "MemFreeDelta": "-25313280B"
+    "time": {
+      "elapsed_seconds": 10.0,
+      "cpu_percent": 16.9,
+      "max_rss_kb": 32600
     },
-    "BW_average": 719.99,
-    "MsgRate": 0.01152,
-    "BW_peak": 0.0,
-    "n_iterations": 69120,
-    "MsgSize": 65536
+    "server_cpu_per_core": {
+      "before": {
+        "cpu0": {
+          "idle": 10000,
+          "total": 20000
+        },
+        "cpu1": {
+          "idle": 11000,
+          "total": 20000
+        }
+      },
+      "after": {
+        "cpu0": {
+          "idle": 9630,
+          "total": 21000
+        },
+        "cpu1": {
+          "idle": 10686,
+          "total": 21000
+        }
+      }
+    },
+    "client_cpu_per_core": {
+      "before": {
+        "cpu0": {
+          "idle": 12000,
+          "total": 22000
+        },
+        "cpu1": {
+          "idle": 12500,
+          "total": 22000
+        }
+      },
+      "after": {
+        "cpu0": {
+          "idle": 11679,
+          "total": 23000
+        },
+        "cpu1": {
+          "idle": 12230,
+          "total": 23000
+        }
+      }
+    },
+    "server_cpu_avg": 18.5,
+    "client_cpu_avg": 16.9,
+    "server_memory": {
+      "before": {
+        "MemTotal": 131900000,
+        "MemFree": 42000000,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      },
+      "after": {
+        "MemTotal": 131900000,
+        "MemFree": 41952896,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      }
+    },
+    "client_memory": {
+      "before": {
+        "MemTotal": 131900000,
+        "MemFree": 42000000,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      },
+      "after": {
+        "MemTotal": 131900000,
+        "MemFree": 41956992,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      }
+    },
+    "server_mem_used_delta_mib": 46,
+    "client_mem_used_delta_mib": 42
   },
   {
+    "index": 2,
     "params": {
       "port": 18515,
       "msg_size": "64K",
       "qp": 4
     },
-    "error": null,
-    "elapsed_sec": 13.6,
-    "cpu_per_core": {
-      "cpu": 8.04445425774638,
-      "cpu0": 0.22075055187638082,
-      "cpu1": 0.14695077149154967,
-      "cpu2": 1.915991156963892,
-      "cpu3": 0.22075055187638082,
-      "cpu4": 33.99558498896247,
-      "cpu5": 0.07358351729213064,
-      "cpu6": 43.47826086956522,
-      "cpu7": 0.22091310751104487,
-      "cpu8": 0.14716703458425018,
-      "cpu9": 0.07358351729213064
+    "server_host": "rdma-server.example.com",
+    "server_address": "rdma-server-data.example.com",
+    "client_host": "rdma-client.example.com",
+    "perftest": {
+      "BW_average": 34100,
+      "MsgRate": 0.54,
+      "MsgSize": 65536,
+      "t_avg": 4.4,
+      "t_min": 3.2,
+      "t_max": 6.6
     },
-    "memory": {
-      "MemTotal": "15.6G",
-      "MemFree": "8.7G",
-      "MemUsed": "1.1G",
-      "Buffers": "318.6M",
-      "Cached": "5.5G",
-      "MemUsedDelta": "6.2M",
-      "MemFreeDelta": "6.2M"
+    "time": {
+      "elapsed_seconds": 10.0,
+      "cpu_percent": 22.1,
+      "max_rss_kb": 33200
     },
-    "BW_average": 719.99,
-    "MsgRate": 0.01152,
-    "BW_peak": 0.0,
-    "n_iterations": 69120,
-    "MsgSize": 65536
+    "server_cpu_per_core": {
+      "before": {
+        "cpu0": {
+          "idle": 10000,
+          "total": 20000
+        },
+        "cpu1": {
+          "idle": 11000,
+          "total": 20000
+        }
+      },
+      "after": {
+        "cpu0": {
+          "idle": 9520,
+          "total": 21000
+        },
+        "cpu1": {
+          "idle": 10592,
+          "total": 21000
+        }
+      }
+    },
+    "client_cpu_per_core": {
+      "before": {
+        "cpu0": {
+          "idle": 12000,
+          "total": 22000
+        },
+        "cpu1": {
+          "idle": 12500,
+          "total": 22000
+        }
+      },
+      "after": {
+        "cpu0": {
+          "idle": 11581,
+          "total": 23000
+        },
+        "cpu1": {
+          "idle": 12147,
+          "total": 23000
+        }
+      }
+    },
+    "server_cpu_avg": 24.0,
+    "client_cpu_avg": 22.1,
+    "server_memory": {
+      "before": {
+        "MemTotal": 131900000,
+        "MemFree": 42000000,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      },
+      "after": {
+        "MemTotal": 131900000,
+        "MemFree": 41927296,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      }
+    },
+    "client_memory": {
+      "before": {
+        "MemTotal": 131900000,
+        "MemFree": 42000000,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      },
+      "after": {
+        "MemTotal": 131900000,
+        "MemFree": 41933440,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      }
+    },
+    "server_mem_used_delta_mib": 71,
+    "client_mem_used_delta_mib": 65
   },
   {
+    "index": 3,
     "params": {
       "port": 18515,
       "msg_size": "64K",
       "qp": 8
     },
-    "error": null,
-    "elapsed_sec": 13.61,
-    "cpu_per_core": {
-      "cpu": 8.052062651665558,
-      "cpu0": 0.14716703458425018,
-      "cpu1": 0.07347538574578039,
-      "cpu2": 0.07363770250368162,
-      "cpu3": 75.29411764705883,
-      "cpu4": 0.07347538574578039,
-      "cpu5": 1.983835415135926,
-      "cpu6": 0.22075055187638082,
-      "cpu7": 0.22091310751104487,
-      "cpu8": 2.0573108008817065,
-      "cpu9": 0.22042615723733006
+    "server_host": "rdma-server.example.com",
+    "server_address": "rdma-server-data.example.com",
+    "client_host": "rdma-client.example.com",
+    "perftest": {
+      "BW_average": 61200,
+      "MsgRate": 0.97,
+      "MsgSize": 65536,
+      "t_avg": 4.6,
+      "t_min": 3.3,
+      "t_max": 6.9
     },
-    "memory": {
-      "MemTotal": "15.6G",
-      "MemFree": "8.7G",
-      "MemUsed": "1.1G",
-      "Buffers": "318.6M",
-      "Cached": "5.5G",
-      "MemUsedDelta": "5.1M",
-      "MemFreeDelta": "-5443584B"
+    "time": {
+      "elapsed_seconds": 10.0,
+      "cpu_percent": 35.4,
+      "max_rss_kb": 33800
     },
-    "BW_average": 714.65,
-    "MsgRate": 0.011434,
-    "BW_peak": 0.0,
-    "n_iterations": 68608,
-    "MsgSize": 65536
+    "server_cpu_per_core": {
+      "before": {
+        "cpu0": {
+          "idle": 10000,
+          "total": 20000
+        },
+        "cpu1": {
+          "idle": 11000,
+          "total": 20000
+        }
+      },
+      "after": {
+        "cpu0": {
+          "idle": 9244,
+          "total": 21000
+        },
+        "cpu1": {
+          "idle": 10358,
+          "total": 21000
+        }
+      }
+    },
+    "client_cpu_per_core": {
+      "before": {
+        "cpu0": {
+          "idle": 12000,
+          "total": 22000
+        },
+        "cpu1": {
+          "idle": 12500,
+          "total": 22000
+        }
+      },
+      "after": {
+        "cpu0": {
+          "idle": 11328,
+          "total": 23000
+        },
+        "cpu1": {
+          "idle": 11934,
+          "total": 23000
+        }
+      }
+    },
+    "server_cpu_avg": 37.8,
+    "client_cpu_avg": 35.4,
+    "server_memory": {
+      "before": {
+        "MemTotal": 131900000,
+        "MemFree": 42000000,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      },
+      "after": {
+        "MemTotal": 131900000,
+        "MemFree": 41889408,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      }
+    },
+    "client_memory": {
+      "before": {
+        "MemTotal": 131900000,
+        "MemFree": 42000000,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      },
+      "after": {
+        "MemTotal": 131900000,
+        "MemFree": 41898624,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      }
+    },
+    "server_mem_used_delta_mib": 108,
+    "client_mem_used_delta_mib": 99
   },
   {
+    "index": 4,
     "params": {
       "port": 18515,
       "msg_size": "64K",
       "qp": 16
     },
-    "error": null,
-    "elapsed_sec": 13.63,
-    "cpu_per_core": {
-      "cpu": 8.048171537670735,
-      "cpu0": 0.22026431718061845,
-      "cpu1": 0.21994134897360684,
-      "cpu2": 0.14695077149154967,
-      "cpu3": 2.204261572373256,
-      "cpu4": 0.14662756598240456,
-      "cpu5": 0.1468428781204123,
-      "cpu6": 75.2017608217168,
-      "cpu7": 0.07358351729213064,
-      "cpu8": 2.0573108008817065,
-      "cpu9": 0.22026431718061845
+    "server_host": "rdma-server.example.com",
+    "server_address": "rdma-server-data.example.com",
+    "client_host": "rdma-client.example.com",
+    "perftest": {
+      "BW_average": 92800,
+      "MsgRate": 1.48,
+      "MsgSize": 65536,
+      "t_avg": 4.8,
+      "t_min": 3.4,
+      "t_max": 7.2
     },
-    "memory": {
-      "MemTotal": "15.6G",
-      "MemFree": "8.7G",
-      "MemUsed": "1.1G",
-      "Buffers": "318.6M",
-      "Cached": "5.5G",
-      "MemUsedDelta": "4.9M",
-      "MemFreeDelta": "-5128192B"
+    "time": {
+      "elapsed_seconds": 10.0,
+      "cpu_percent": 49.6,
+      "max_rss_kb": 34400
     },
-    "BW_average": 714.66,
-    "MsgRate": 0.011435,
-    "BW_peak": 0.0,
-    "n_iterations": 68608,
-    "MsgSize": 65536
+    "server_cpu_per_core": {
+      "before": {
+        "cpu0": {
+          "idle": 10000,
+          "total": 20000
+        },
+        "cpu1": {
+          "idle": 11000,
+          "total": 20000
+        }
+      },
+      "after": {
+        "cpu0": {
+          "idle": 8896,
+          "total": 21000
+        },
+        "cpu1": {
+          "idle": 10062,
+          "total": 21000
+        }
+      }
+    },
+    "client_cpu_per_core": {
+      "before": {
+        "cpu0": {
+          "idle": 12000,
+          "total": 22000
+        },
+        "cpu1": {
+          "idle": 12500,
+          "total": 22000
+        }
+      },
+      "after": {
+        "cpu0": {
+          "idle": 11058,
+          "total": 23000
+        },
+        "cpu1": {
+          "idle": 11707,
+          "total": 23000
+        }
+      }
+    },
+    "server_cpu_avg": 55.2,
+    "client_cpu_avg": 49.6,
+    "server_memory": {
+      "before": {
+        "MemTotal": 131900000,
+        "MemFree": 42000000,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      },
+      "after": {
+        "MemTotal": 131900000,
+        "MemFree": 41832064,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      }
+    },
+    "client_memory": {
+      "before": {
+        "MemTotal": 131900000,
+        "MemFree": 42000000,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      },
+      "after": {
+        "MemTotal": 131900000,
+        "MemFree": 41855616,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      }
+    },
+    "server_mem_used_delta_mib": 164,
+    "client_mem_used_delta_mib": 141
   },
   {
+    "index": 5,
     "params": {
       "port": 18515,
       "msg_size": "64K",
       "qp": 32
     },
-    "error": null,
-    "elapsed_sec": 13.61,
-    "cpu_per_core": {
-      "cpu": 8.037946756876014,
-      "cpu0": 75.31227038941954,
-      "cpu1": 0.07363770250368162,
-      "cpu2": 1.9852941176470629,
-      "cpu3": 0.29390154298309934,
-      "cpu4": 0.07352941176470562,
-      "cpu5": 1.9103600293901568,
-      "cpu6": 0.07363770250368162,
-      "cpu7": 0.22123893805309214,
-      "cpu8": 0.22026431718061845,
-      "cpu9": 0.14695077149154967
+    "server_host": "rdma-server.example.com",
+    "server_address": "rdma-server-data.example.com",
+    "client_host": "rdma-client.example.com",
+    "perftest": {
+      "BW_average": 104500,
+      "MsgRate": 1.66,
+      "MsgSize": 65536,
+      "t_avg": 5.0,
+      "t_min": 3.5,
+      "t_max": 7.5
     },
-    "memory": {
-      "MemTotal": "15.6G",
-      "MemFree": "8.7G",
-      "MemUsed": "1.1G",
-      "Buffers": "318.6M",
-      "Cached": "5.5G",
-      "MemUsedDelta": "5.2M",
-      "MemFreeDelta": "4.5M"
+    "time": {
+      "elapsed_seconds": 10.0,
+      "cpu_percent": 57.9,
+      "max_rss_kb": 35000
     },
-    "BW_average": 714.65,
-    "MsgRate": 0.011434,
-    "BW_peak": 0.0,
-    "n_iterations": 68608,
-    "MsgSize": 65536
+    "server_cpu_per_core": {
+      "before": {
+        "cpu0": {
+          "idle": 10000,
+          "total": 20000
+        },
+        "cpu1": {
+          "idle": 11000,
+          "total": 20000
+        }
+      },
+      "after": {
+        "cpu0": {
+          "idle": 8632,
+          "total": 21000
+        },
+        "cpu1": {
+          "idle": 9838,
+          "total": 21000
+        }
+      }
+    },
+    "client_cpu_per_core": {
+      "before": {
+        "cpu0": {
+          "idle": 12000,
+          "total": 22000
+        },
+        "cpu1": {
+          "idle": 12500,
+          "total": 22000
+        }
+      },
+      "after": {
+        "cpu0": {
+          "idle": 10900,
+          "total": 23000
+        },
+        "cpu1": {
+          "idle": 11574,
+          "total": 23000
+        }
+      }
+    },
+    "server_cpu_avg": 68.4,
+    "client_cpu_avg": 57.9,
+    "server_memory": {
+      "before": {
+        "MemTotal": 131900000,
+        "MemFree": 42000000,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      },
+      "after": {
+        "MemTotal": 131900000,
+        "MemFree": 41768576,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      }
+    },
+    "client_memory": {
+      "before": {
+        "MemTotal": 131900000,
+        "MemFree": 42000000,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      },
+      "after": {
+        "MemTotal": 131900000,
+        "MemFree": 41822848,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      }
+    },
+    "server_mem_used_delta_mib": 226,
+    "client_mem_used_delta_mib": 173
   },
   {
+    "index": 6,
     "params": {
       "port": 18515,
       "msg_size": "64K",
       "qp": 64
     },
-    "error": null,
-    "elapsed_sec": 13.59,
-    "cpu_per_core": {
-      "cpu": 8.067721751932277,
-      "cpu0": 0.29433406916851146,
-      "cpu1": 0.22042615723733006,
-      "cpu2": 0.07374631268436405,
-      "cpu3": 0.07358351729213064,
-      "cpu4": 0.07358351729213064,
-      "cpu5": 2.135493372606778,
-      "cpu6": 0.22140221402213722,
-      "cpu7": 75.3495217071376,
-      "cpu8": 0.22075055187638082,
-      "cpu9": 1.9117647058823573
+    "server_host": "rdma-server.example.com",
+    "server_address": "rdma-server-data.example.com",
+    "client_host": "rdma-client.example.com",
+    "perftest": {
+      "BW_average": 106200,
+      "MsgRate": 1.69,
+      "MsgSize": 65536,
+      "t_avg": 5.2,
+      "t_min": 3.6,
+      "t_max": 7.8
     },
-    "memory": {
-      "MemTotal": "15.6G",
-      "MemFree": "8.7G",
-      "MemUsed": "1.1G",
-      "Buffers": "318.6M",
-      "Cached": "5.5G",
-      "MemUsedDelta": "13.2M",
-      "MemFreeDelta": "-14172160B"
+    "time": {
+      "elapsed_seconds": 10.0,
+      "cpu_percent": 61.2,
+      "max_rss_kb": 35600
     },
-    "BW_average": 714.65,
-    "MsgRate": 0.011434,
-    "BW_peak": 0.0,
-    "n_iterations": 68608,
-    "MsgSize": 65536
-  },
-  {
-    "params": {
-      "port": 18515,
-      "msg_size": "64K",
-      "qp": 128
+    "server_cpu_per_core": {
+      "before": {
+        "cpu0": {
+          "idle": 10000,
+          "total": 20000
+        },
+        "cpu1": {
+          "idle": 11000,
+          "total": 20000
+        }
+      },
+      "after": {
+        "cpu0": {
+          "idle": 8544,
+          "total": 21000
+        },
+        "cpu1": {
+          "idle": 9763,
+          "total": 21000
+        }
+      }
     },
-    "error": null,
-    "elapsed_sec": 13.6,
-    "cpu_per_core": {
-      "cpu": 8.056209535020598,
-      "cpu0": 2.132352941176474,
-      "cpu1": 0.2941176470588225,
-      "cpu2": 0.22091310751104487,
-      "cpu3": 1.8409425625920517,
-      "cpu4": 0.07358351729213064,
-      "cpu5": 0.14716703458425018,
-      "cpu6": 0.22107590272659738,
-      "cpu7": 0.0,
-      "cpu8": 75.40381791483112,
-      "cpu9": 0.07358351729213064
+    "client_cpu_per_core": {
+      "before": {
+        "cpu0": {
+          "idle": 12000,
+          "total": 22000
+        },
+        "cpu1": {
+          "idle": 12500,
+          "total": 22000
+        }
+      },
+      "after": {
+        "cpu0": {
+          "idle": 10838,
+          "total": 23000
+        },
+        "cpu1": {
+          "idle": 11521,
+          "total": 23000
+        }
+      }
     },
-    "memory": {
-      "MemTotal": "15.6G",
-      "MemFree": "8.7G",
-      "MemUsed": "1.1G",
-      "Buffers": "318.6M",
-      "Cached": "5.5G",
-      "MemUsedDelta": "872.0K",
-      "MemFreeDelta": "-1134592B"
+    "server_cpu_avg": 72.8,
+    "client_cpu_avg": 61.2,
+    "server_memory": {
+      "before": {
+        "MemTotal": 131900000,
+        "MemFree": 42000000,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      },
+      "after": {
+        "MemTotal": 131900000,
+        "MemFree": 41750144,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      }
     },
-    "BW_average": 714.65,
-    "MsgRate": 0.011434,
-    "BW_peak": 0.0,
-    "n_iterations": 68608,
-    "MsgSize": 65536
+    "client_memory": {
+      "before": {
+        "MemTotal": 131900000,
+        "MemFree": 42000000,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      },
+      "after": {
+        "MemTotal": 131900000,
+        "MemFree": 41814656,
+        "Buffers": 1000000,
+        "Cached": 25000000,
+        "MemAvailable": 65000000
+      }
+    },
+    "server_mem_used_delta_mib": 244,
+    "client_mem_used_delta_mib": 181
   }
 ]

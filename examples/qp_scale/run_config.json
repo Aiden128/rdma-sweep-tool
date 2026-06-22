@@ -1,0 +1,15 @@
+{
+  "test": "ib_write_bw",
+  "duration": 10,
+  "server": {
+    "host": "rdma-server.example.com",
+    "address": "rdma-server-data.example.com"
+  },
+  "client": {
+    "host": "rdma-client.example.com"
+  },
+  "report": {
+    "title": "QP Scale RDMA Sweep",
+    "subtitle": "Sample dual-server report with CPU and memory panels"
+  }
+}

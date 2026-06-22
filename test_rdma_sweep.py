@@ -7,10 +7,20 @@ Or:  python3 -m rdma_sweep_tool.test_rdma_sweep
 import unittest
 import sys
 import os
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from rdma_sweep import _parse_perf_report, _parse_json_output, SysMonitor
+from rdma_sweep import (
+    DEFAULT_PERFTEST_CONFIG,
+    SysMonitor,
+    _build_args,
+    _parse_json_output,
+    _parse_perf_report,
+    _runtime_config,
+    run_perftest,
+)
+from rdma_remote import RemoteResult
 
 
 # ---------------------------------------------------------------------------
@@ -159,6 +169,332 @@ class TestParseJsonOutput(unittest.TestCase):
     def test_whitespace_only(self):
         result = _parse_json_output("   \n  ")
         self.assertIn("error", result)
+
+
+# ---------------------------------------------------------------------------
+# Dual-host config and runner behavior
+# ---------------------------------------------------------------------------
+
+class TestDualHostConfig(unittest.TestCase):
+    """Config normalization enforces a real client/server split."""
+
+    def test_normalizes_preferred_schema(self):
+        runtime = _runtime_config({
+            "test": "ib_write_bw",
+            "duration": 5,
+            "server": {
+                "host": "server-admin@example-server",
+                "address": "rdma-server.example.com",
+            },
+            "client": {"host": "client-user@example-client"},
+            "perftest": {
+                "dir": "/swsys/perftest",
+                "rdma_core_lib": "/swsys/rdma-core/build/lib",
+                "env": {"FOO": "bar"},
+                "json_file": "/tmp/custom.json",
+            },
+            "ssh": {
+                "sudo": False,
+                "connect_timeout": 3,
+                "options": "-o StrictHostKeyChecking=no",
+            },
+            "report": {"title": "Two-node RDMA sweep"},
+        })
+
+        self.assertEqual(runtime["server"]["host"], "server-admin@example-server")
+        self.assertEqual(runtime["server"]["address"], "rdma-server.example.com")
+        self.assertEqual(runtime["client"]["host"], "client-user@example-client")
+        self.assertEqual(runtime["perftest"]["dir"], "/swsys/perftest")
+        self.assertEqual(runtime["perftest"]["json_file"], "/tmp/custom.json")
+        self.assertEqual(runtime["ssh"]["sudo"], False)
+        self.assertEqual(runtime["ssh"]["options"], ["-o", "StrictHostKeyChecking=no"])
+        self.assertEqual(runtime["report"]["title"], "Two-node RDMA sweep")
+
+    def test_requires_client_host(self):
+        with self.assertRaisesRegex(ValueError, "client.host"):
+            _runtime_config({"server": {"host": "server-ssh", "address": "10.0.0.2"}})
+
+    def test_requires_server_address(self):
+        with self.assertRaisesRegex(ValueError, "server.address"):
+            _runtime_config({
+                "server": {"host": "server-ssh"},
+                "client": {"host": "client-ssh"},
+            })
+
+    def test_parses_string_booleans(self):
+        runtime = _runtime_config({
+            "server": {"host": "server-ssh", "address": "10.0.0.2"},
+            "client": {"host": "client-ssh"},
+            "use_gpu": "false",
+            "ssh": {"sudo": "false"},
+            "perftest": {"dir": "/opt/perftest", "perf_record": "false"},
+        })
+        self.assertFalse(runtime["use_gpu"])
+        self.assertFalse(runtime["ssh"]["sudo"])
+        self.assertFalse(runtime["perftest"]["perf_record"])
+
+    def test_rejects_ambiguous_string_boolean(self):
+        with self.assertRaisesRegex(ValueError, "ssh.sudo"):
+            _runtime_config({
+                "server": {"host": "server-ssh", "address": "10.0.0.2"},
+                "client": {"host": "client-ssh"},
+                "perftest": {"dir": "/opt/perftest"},
+                "ssh": {"sudo": "maybe"},
+            })
+
+    def test_requires_perftest_dir(self):
+        with self.assertRaisesRegex(ValueError, "perftest.dir"):
+            _runtime_config({
+                "server": {"host": "server-ssh", "address": "10.0.0.2"},
+                "client": {"host": "client-ssh"},
+            })
+
+    def test_ssh_defaults_verify_host_keys(self):
+        runtime = _runtime_config({
+            "server": {"host": "server-ssh", "address": "10.0.0.2"},
+            "client": {"host": "client-ssh"},
+            "perftest": {"dir": "/opt/perftest"},
+        })
+        self.assertIn("StrictHostKeyChecking=accept-new", runtime["ssh"]["options"])
+        self.assertNotIn("StrictHostKeyChecking=no", runtime["ssh"]["options"])
+        self.assertNotIn("UserKnownHostsFile=/dev/null", runtime["ssh"]["options"])
+
+    def test_rejects_same_machine_even_with_different_users(self):
+        with self.assertRaisesRegex(ValueError, "different machines"):
+            _runtime_config({
+                "server": {"host": "root@10.0.0.2"},
+                "client": {"host": "user@10.0.0.2"},
+            })
+
+    def test_rejects_loopback_server_address(self):
+        with self.assertRaisesRegex(ValueError, "not loopback"):
+            _runtime_config({
+                "server": {"host": "server-ssh", "address": "127.0.0.1"},
+                "client": {"host": "client-ssh"},
+            })
+
+
+class TestBuildArgsConfigKeys(unittest.TestCase):
+    """Runtime config keys are not forwarded as perftest flags."""
+
+    def test_skips_runtime_config_keys_and_duration(self):
+        args = _build_args({
+            "msg_size": "64K",
+            "qp": 4,
+            "port": 18515,
+            "duration": 5,
+            "server": {"host": "server-ssh"},
+            "client": {"host": "client-ssh"},
+            "perftest": {"dir": "/tmp/perftest"},
+            "ssh": {"sudo": False},
+            "report": {"title": "x"},
+            "server_address": "10.0.0.2",
+            "device": "roceP2p1s0f1",
+            "gid_index": 1,
+            "force_link": "Ethernet",
+            "rdma_cm": True,
+            "comm_rdma_cm": False,
+        })
+
+        self.assertEqual(
+            args,
+            [
+                "-s", "64K",
+                "-q", "4",
+                "-p", "18515",
+                "-d", "roceP2p1s0f1",
+                "-x", "1",
+                "--force-link", "Ethernet",
+                "-R",
+            ],
+        )
+        self.assertNotIn("-D", args)
+        self.assertNotIn("--server", args)
+        self.assertNotIn("--client", args)
+
+
+class TestRunPerftestDualHost(unittest.TestCase):
+    """run_perftest starts server remotely and runs client against server.address."""
+
+    def test_client_runs_on_client_host_against_server_address(self):
+        perftest_config = dict(DEFAULT_PERFTEST_CONFIG)
+        perftest_config.update({
+            "dir": "/opt/perftest",
+            "rdma_core_lib": "/opt/rdma-core/build/lib",
+            "json_file": "/tmp/test_out.json",
+            "time_file": "/tmp/test_time.out",
+            "server_pid_file": "/tmp/test_server.pid",
+            "server_log_file": "/tmp/test_server.log",
+            "perf_data": "/tmp/test_perf.data",
+            "perf_pid_file": "/tmp/test_perf.pid",
+            "wait_timeout": 1,
+        })
+        calls = []
+
+        def fake_run_remote_result(cmd, host, **kwargs):
+            calls.append((host, cmd, kwargs))
+            if "cat /tmp/test_server.pid" in cmd:
+                return RemoteResult(host=host, command=cmd, stdout="123\n")
+            if "cat /tmp/test_time.out" in cmd:
+                return RemoteResult(host=host, command=cmd, stdout="1.0 0.5 50% 1024 0 0\n")
+            if "perf report" in cmd:
+                return RemoteResult(
+                    host=host,
+                    command=cmd,
+                    stdout="10.00% 10.00% ib_write_bw [kernel.kallsyms] [k] rxe_requester\n",
+                )
+            if "cat /tmp/test_out.json" in cmd:
+                return RemoteResult(
+                    host=host,
+                    command=cmd,
+                    stdout='{"results": {"BW_average": 42, "MsgRate": 0.1}}',
+                )
+            return RemoteResult(host=host, command=cmd)
+
+        with (
+            patch("rdma_sweep._run_remote_result", side_effect=fake_run_remote_result),
+            patch("rdma_sweep._wait_for_port") as wait_for_port,
+            patch("rdma_sweep._cancel") as cancel,
+        ):
+            result = run_perftest(
+                binary="ib_write_bw",
+                server_host="server-ssh",
+                client_host="client-ssh",
+                server_address="10.0.0.2",
+                perftest_config=perftest_config,
+                ssh_config={"sudo": True, "connect_timeout": 1, "options": []},
+                extra_args=["-s", "64K", "-q", "4", "-p", "18515"],
+                duration=5,
+                use_gpu=False,
+            )
+
+        self.assertEqual(result["results"]["BW_average"], 42)
+        self.assertEqual(result["_process"]["server_host"], "server-ssh")
+        self.assertEqual(result["_process"]["client_host"], "client-ssh")
+        self.assertEqual(result["_process"]["server_address"], "10.0.0.2")
+        wait_for_port.assert_called_once_with(
+            "server-ssh",
+            18515,
+            timeout=1,
+            ssh_config={"sudo": True, "connect_timeout": 1, "options": []},
+        )
+        cancel.assert_called_once()
+
+        server_launches = [
+            cmd for host, cmd, _ in calls
+            if host == "server-ssh" and "/opt/perftest/ib_write_bw" in cmd and "/usr/bin/time" not in cmd
+        ]
+        client_runs = [
+            cmd for host, cmd, _ in calls
+            if host == "client-ssh" and "/usr/bin/time" in cmd
+        ]
+        json_reads = [
+            cmd for host, cmd, _ in calls
+            if host == "client-ssh" and "cat /tmp/test_out.json" in cmd
+        ]
+
+        self.assertEqual(len(server_launches), 1)
+        self.assertEqual(len(client_runs), 1)
+        self.assertEqual(len(json_reads), 1)
+        self.assertNotIn("--server", server_launches[0])
+        self.assertIn("10.0.0.2", client_runs[0])
+        self.assertNotIn("127.0.0.1", client_runs[0])
+
+    def test_iters_does_not_also_add_duration_flag(self):
+        perftest_config = dict(DEFAULT_PERFTEST_CONFIG)
+        perftest_config.update({
+            "dir": "/opt/perftest",
+            "json_file": "/tmp/test_out.json",
+            "time_file": "/tmp/test_time.out",
+            "server_pid_file": "/tmp/test_server.pid",
+            "server_log_file": "/tmp/test_server.log",
+            "perf_data": "/tmp/test_perf.data",
+            "perf_pid_file": "/tmp/test_perf.pid",
+            "perf_record": False,
+            "wait_timeout": 1,
+        })
+        calls = []
+
+        def fake_run_remote_result(cmd, host, **kwargs):
+            calls.append((host, cmd, kwargs))
+            if "cat /tmp/test_server.pid" in cmd:
+                return RemoteResult(host=host, command=cmd, stdout="123\nnow\nrun\n")
+            if "cat /tmp/test_time.out" in cmd:
+                return RemoteResult(host=host, command=cmd, stdout="1.0 0.5 50% 1024 0 0\n")
+            if "cat /tmp/test_out.json" in cmd:
+                return RemoteResult(host=host, command=cmd, stdout='{"results": {"BW_average": 42}}')
+            return RemoteResult(host=host, command=cmd)
+
+        with (
+            patch("rdma_sweep._run_remote_result", side_effect=fake_run_remote_result),
+            patch("rdma_sweep._wait_for_port"),
+            patch("rdma_sweep._cancel"),
+        ):
+            result = run_perftest(
+                binary="ib_write_bw",
+                server_host="server-ssh",
+                client_host="client-ssh",
+                server_address="10.0.0.2",
+                perftest_config=perftest_config,
+                ssh_config={"sudo": False, "connect_timeout": 1, "options": []},
+                extra_args=["-n", "100", "-p", "18515"],
+                duration=5,
+                use_gpu=False,
+            )
+
+        self.assertNotIn("error", result)
+        relevant = [
+            cmd for _host, cmd, _kwargs in calls
+            if "/opt/perftest/ib_write_bw" in cmd
+        ]
+        self.assertTrue(relevant)
+        self.assertTrue(all("-n 100" in cmd for cmd in relevant))
+        self.assertTrue(all("-D 5" not in cmd for cmd in relevant))
+
+    def test_client_nonzero_with_json_is_still_error(self):
+        perftest_config = dict(DEFAULT_PERFTEST_CONFIG)
+        perftest_config.update({
+            "dir": "/opt/perftest",
+            "json_file": "/tmp/test_out.json",
+            "time_file": "/tmp/test_time.out",
+            "server_pid_file": "/tmp/test_server.pid",
+            "server_log_file": "/tmp/test_server.log",
+            "perf_data": "/tmp/test_perf.data",
+            "perf_pid_file": "/tmp/test_perf.pid",
+            "perf_record": False,
+            "wait_timeout": 1,
+        })
+
+        def fake_run_remote_result(cmd, host, **kwargs):
+            if "cat /tmp/test_server.pid" in cmd:
+                return RemoteResult(host=host, command=cmd, stdout="123\n")
+            if "cat /tmp/test_time.out" in cmd:
+                return RemoteResult(host=host, command=cmd, stdout="1.0 0.5 50% 1024 0 0\n")
+            if "cat /tmp/test_out.json" in cmd:
+                return RemoteResult(host=host, command=cmd, stdout='{"results": {"BW_average": 42}}')
+            if "/usr/bin/time" in cmd:
+                return RemoteResult(host=host, command=cmd, returncode=2, stderr="boom")
+            return RemoteResult(host=host, command=cmd)
+
+        with (
+            patch("rdma_sweep._run_remote_result", side_effect=fake_run_remote_result),
+            patch("rdma_sweep._wait_for_port"),
+            patch("rdma_sweep._cancel"),
+        ):
+            result = run_perftest(
+                binary="ib_write_bw",
+                server_host="server-ssh",
+                client_host="client-ssh",
+                server_address="10.0.0.2",
+                perftest_config=perftest_config,
+                ssh_config={"sudo": True, "connect_timeout": 1, "options": []},
+                extra_args=["-s", "64K", "-q", "4", "-p", "18515"],
+                duration=5,
+                use_gpu=False,
+            )
+
+        self.assertIn("error", result)
+        self.assertIn("client run failed", result["error"])
 
 
 # ---------------------------------------------------------------------------
