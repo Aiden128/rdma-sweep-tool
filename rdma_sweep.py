@@ -467,9 +467,7 @@ def run_perftest(
             if not perf_started:
                 return {"error": f"perf record failed: {perf_start.error_summary()}", "_process": process}
 
-        # Run client wrapped with /usr/bin/time for process resource accounting
-        # perftest often returns exit code 1 even on success (cosmetic/non-fatal
-        # warnings) so we tolerate non-zero exit.
+        # Run client wrapped with /usr/bin/time for process resource accounting.
         time_fmt = "%U %S %P %M %c %w"
         client_run = _run_remote_result(
             f"mkdir -p {tmp_dir_q}; rm -f {json_q} {time_q}; "
@@ -547,6 +545,8 @@ def run_perftest(
             result["error"] = f"client run failed: {client_run.error_summary()}"
         elif not json_read.ok:
             result["error"] = f"client JSON read failed: {json_read.error_summary()}"
+        elif metric_error := _validate_perftest_metrics(binary, result):
+            result["error"] = metric_error
         result["_process"] = process
         return result
     except Exception as exc:
@@ -633,6 +633,20 @@ def _parse_json_output(raw: str | None) -> dict[str, Any]:
         return {"error": f"JSON parse failed", "raw_snippet": raw[:500]}
 
 
+def _validate_perftest_metrics(binary: str, result: dict[str, Any]) -> str:
+    if "error" in result:
+        return ""
+    metrics = result.get("results")
+    if not isinstance(metrics, dict):
+        return "perftest JSON missing results object"
+
+    required = ("t_avg",) if binary.endswith("_lat") else ("BW_average", "MsgRate")
+    missing = [key for key in required if metrics.get(key) is None]
+    if missing:
+        return f"perftest JSON missing expected field(s): {', '.join(missing)}"
+    return ""
+
+
 # ---------------------------------------------------------------------------
 # Sweep runner
 # ---------------------------------------------------------------------------
@@ -676,7 +690,7 @@ def sweep_config(config: dict[str, Any]) -> Iterator[dict[str, Any]]:
           duration: 10
           server:
             host: dpu-server
-            address: 192.168.1.10
+            address: rdma-server-data.example.com
           client:
             host: dpu-client
           perftest:

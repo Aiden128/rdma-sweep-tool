@@ -23,6 +23,7 @@ from rdma_sweep import (
     _parse_json_output,
     _parse_perf_report,
     _runtime_config,
+    _validate_perftest_metrics,
     generate_report,
     run_perftest,
 )
@@ -176,6 +177,19 @@ class TestParseJsonOutput(unittest.TestCase):
         result = _parse_json_output("   \n  ")
         self.assertIn("error", result)
 
+    def test_bw_result_requires_bandwidth_metrics(self):
+        result = {"results": {"BW_average": 27.38}}
+        error = _validate_perftest_metrics("ib_write_bw", result)
+        self.assertIn("MsgRate", error)
+
+    def test_latency_result_requires_latency_metric(self):
+        result = {"results": {"t_avg": 1.2}}
+        self.assertEqual(_validate_perftest_metrics("ib_write_lat", result), "")
+
+    def test_missing_results_object_is_metric_error(self):
+        result = {"result": [{"BW_average": 27.38}]}
+        self.assertIn("missing results object", _validate_perftest_metrics("ib_write_bw", result))
+
 
 # ---------------------------------------------------------------------------
 # Dual-host config and runner behavior
@@ -194,8 +208,8 @@ class TestDualHostConfig(unittest.TestCase):
             },
             "client": {"host": "client-user@example-client"},
             "perftest": {
-                "dir": "/swsys/perftest",
-                "rdma_core_lib": "/swsys/rdma-core/build/lib",
+                "dir": "/opt/perftest",
+                "rdma_core_lib": "/opt/rdma-core/build/lib",
                 "env": {"FOO": "bar"},
                 "json_file": "/tmp/custom.json",
             },
@@ -210,7 +224,7 @@ class TestDualHostConfig(unittest.TestCase):
         self.assertEqual(runtime["server"]["host"], "server-admin@example-server")
         self.assertEqual(runtime["server"]["address"], "rdma-server.example.com")
         self.assertEqual(runtime["client"]["host"], "client-user@example-client")
-        self.assertEqual(runtime["perftest"]["dir"], "/swsys/perftest")
+        self.assertEqual(runtime["perftest"]["dir"], "/opt/perftest")
         self.assertEqual(runtime["perftest"]["json_file"], "/tmp/custom.json")
         self.assertEqual(runtime["ssh"]["sudo"], False)
         self.assertEqual(runtime["ssh"]["options"], ["-o", "StrictHostKeyChecking=no"])
@@ -429,7 +443,7 @@ class TestRunPerftestDualHost(unittest.TestCase):
             if "cat /tmp/test_time.out" in cmd:
                 return RemoteResult(host=host, command=cmd, stdout="1.0 0.5 50% 1024 0 0\n")
             if "cat /tmp/test_out.json" in cmd:
-                return RemoteResult(host=host, command=cmd, stdout='{"results": {"BW_average": 42}}')
+                return RemoteResult(host=host, command=cmd, stdout='{"results": {"BW_average": 42, "MsgRate": 0.1}}')
             return RemoteResult(host=host, command=cmd)
 
         with (
@@ -478,7 +492,7 @@ class TestRunPerftestDualHost(unittest.TestCase):
             if "cat /tmp/test_time.out" in cmd:
                 return RemoteResult(host=host, command=cmd, stdout="1.0 0.5 50% 1024 0 0\n")
             if "cat /tmp/test_out.json" in cmd:
-                return RemoteResult(host=host, command=cmd, stdout='{"results": {"BW_average": 42}}')
+                return RemoteResult(host=host, command=cmd, stdout='{"results": {"BW_average": 42, "MsgRate": 0.1}}')
             if "/usr/bin/time" in cmd:
                 return RemoteResult(host=host, command=cmd, returncode=2, stderr="boom")
             return RemoteResult(host=host, command=cmd)
@@ -502,6 +516,49 @@ class TestRunPerftestDualHost(unittest.TestCase):
 
         self.assertIn("error", result)
         self.assertIn("client run failed", result["error"])
+
+    def test_successful_client_missing_metric_is_still_error(self):
+        perftest_config = dict(DEFAULT_PERFTEST_CONFIG)
+        perftest_config.update({
+            "dir": "/opt/perftest",
+            "json_file": "/tmp/test_out.json",
+            "time_file": "/tmp/test_time.out",
+            "server_pid_file": "/tmp/test_server.pid",
+            "server_log_file": "/tmp/test_server.log",
+            "perf_data": "/tmp/test_perf.data",
+            "perf_pid_file": "/tmp/test_perf.pid",
+            "perf_record": False,
+            "wait_timeout": 1,
+        })
+
+        def fake_run_remote_result(cmd: str, host: str, **kwargs: object) -> RemoteResult:
+            if "cat /tmp/test_server.pid" in cmd:
+                return RemoteResult(host=host, command=cmd, stdout="123\n")
+            if "cat /tmp/test_time.out" in cmd:
+                return RemoteResult(host=host, command=cmd, stdout="1.0 0.5 50% 1024 0 0\n")
+            if "cat /tmp/test_out.json" in cmd:
+                return RemoteResult(host=host, command=cmd, stdout='{"results": {"MsgRate": 0.1}}')
+            return RemoteResult(host=host, command=cmd)
+
+        with (
+            patch("rdma_sweep._run_remote_result", side_effect=fake_run_remote_result),
+            patch("rdma_sweep._wait_for_port"),
+            patch("rdma_sweep._cancel", return_value={}),
+        ):
+            result = run_perftest(
+                binary="ib_write_bw",
+                server_host="server-ssh",
+                client_host="client-ssh",
+                server_address="10.0.0.2",
+                perftest_config=perftest_config,
+                ssh_config={"sudo": True, "connect_timeout": 1, "options": []},
+                extra_args=["-s", "64K", "-q", "4", "-p", "18515"],
+                duration=5,
+                use_gpu=False,
+            )
+
+        self.assertIn("error", result)
+        self.assertIn("BW_average", result["error"])
 
 
 class TestRemoteCommandResults(unittest.TestCase):
