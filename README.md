@@ -126,7 +126,17 @@ export RDMA_SWEEP_CLIENT_SSH='client-user@client-host'
 export RDMA_SWEEP_SERVER_ADDR='server-rdma-address'
 export RDMA_SWEEP_PERFTEST_DIR='/opt/perftest'
 export RDMA_SWEEP_TEST='ib_write_bw'
+export RDMA_SWEEP_DEVICE='roce-device-name'
+export RDMA_SWEEP_GID_INDEX='gid-index'
+export RDMA_SWEEP_FORCE_LINK='Ethernet'
 ```
+
+`server-rdma-address` must be assigned to the Ethernet netdev backing the RDMA
+device, not to an unrelated management network.  Confirm the mapping with
+`rdma link`; for example, if it shows `roceP2p1s0f1/1 ... netdev
+enP2p1s0f1np1`, configure the IP on `enP2p1s0f1np1` and use
+`device: roceP2p1s0f1` in the sweep config.  After assigning the IP, run
+`show_gids` and use the RoCEv2 GID index for that IPv4 address.
 
 Check SSH and remote prerequisites:
 
@@ -142,6 +152,7 @@ for h in "$RDMA_SWEEP_SERVER_SSH" "$RDMA_SWEEP_CLIENT_SSH"; do
     test -x /usr/bin/time
     command -v ibv_devices >/dev/null 2>&1 && ibv_devices || true
     command -v rdma >/dev/null 2>&1 && rdma link || true
+    command -v show_gids >/dev/null 2>&1 && show_gids || true
   '
 done
 
@@ -153,6 +164,9 @@ ssh "${SSH_OPTS[@]}" "$RDMA_SWEEP_CLIENT_SSH" \
 
 ssh "${SSH_OPTS[@]}" "$RDMA_SWEEP_CLIENT_SSH" \
   "ip route get \"$RDMA_SWEEP_SERVER_ADDR\""
+
+ssh "${SSH_OPTS[@]}" "$RDMA_SWEEP_CLIENT_SSH" \
+  "ping -c 3 \"$RDMA_SWEEP_SERVER_ADDR\""
 ```
 
 If `sudo -n true` fails, either configure passwordless sudo for the required
@@ -194,6 +208,9 @@ ssh:
 fixed:
   port: ${RDMA_SWEEP_PORT}
   msg_size: ${RDMA_SWEEP_MSG_SIZE}
+  device: ${RDMA_SWEEP_DEVICE}
+  gid_index: ${RDMA_SWEEP_GID_INDEX}
+  force_link: ${RDMA_SWEEP_FORCE_LINK}
 
 sweep:
   - name: qp
