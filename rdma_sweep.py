@@ -710,7 +710,16 @@ def _start_perf_record(
     Records the SSH command result in *process* and any error as
     ``process["perf_start_error"]``.
     """
-    if not server_pid or not perf_record:
+    if not perf_record:
+        return False
+    if not server_pid:
+        # perf was REQUESTED but the server PID could not be read (empty or
+        # non-decimal pid file while the port still came up, so the run is NOT
+        # aborted and its BW is valid).  Attribute the miss so the run renders
+        # "n/a" in the Top-CPU-Consumers bar -- never a zero-height bar
+        # masquerading as a clean "no CPU consumers" reading.  ({} stays an
+        # honest zero-height bar only for perf_record=False -- perf disabled.)
+        process["perf_start_error"] = "perf requested but server PID unavailable"
         return False
     perf_start = _record_command(process, "perf_start", _run_remote_result(
         f"rm -f {perf_data_q} {perf_pid_q}; "
@@ -809,7 +818,7 @@ def _finalize_perf_collection(
     # Best-effort temp cleanup AFTER the report was read: a failed rm -f
     # must not fail the data point, so .ok is intentionally not gated
     # here (unlike the perf_stop / perf_report checks above).
-    perf_data_rm = _record_command(process, "perf_data_rm", _run_remote_result(
+    _record_command(process, "perf_data_rm", _run_remote_result(
         f"rm -f {perf_data_q}",
         server_host,
         ssh_config=ssh_config,

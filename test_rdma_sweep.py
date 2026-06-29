@@ -1114,10 +1114,15 @@ class TestRunPerftestPerfRecord(unittest.TestCase):
         self.assertIn("perf_collection_error", result["_process"])
         self.assertIn("perf stop failed", result["_process"]["perf_collection_error"])
 
-    def test_perf_skipped_when_server_pid_unreadable(self):
-        # perf_record=True but the server PID is empty/non-numeric: perf is
-        # gated on a valid server_pid, so the branch must be skipped (no
-        # ``perf record`` issued) and the bandwidth result still returned.
+    def test_perf_unreadable_pid_attributed_not_silently_skipped(self):
+        # perf_record=True but the server PID is empty/non-numeric while the port
+        # still came up: the run is NOT aborted (BW is valid) and no ``perf
+        # record`` is issued -- but the miss must be ATTRIBUTED as
+        # ``perf_start_error``, not silently dropped.  Otherwise the empty
+        # server_perf renders as a zero-height "no CPU consumers" bar (a
+        # masquerade) instead of "n/a".  The error key is what flips the bar to
+        # "n/a" downstream (see test_svg_failed_profile_*); without this
+        # attribution the run is indistinguishable from perf_record=False.
         calls = []
 
         def fake(cmd, host, timeout=300, ssh_config=None, sudo=None):
@@ -1132,10 +1137,13 @@ class TestRunPerftestPerfRecord(unittest.TestCase):
             return RemoteResult(host=host, command=cmd)
 
         result = self._run(fake)
-        self.assertNotIn("error", result)
+        self.assertNotIn("error", result)                            # BW preserved
         self.assertEqual(result["results"]["BW_average"], 42)
-        self.assertEqual(result["_process"]["server_perf"], {})       # no perf data
-        self.assertFalse(any("perf record" in c for c in calls))      # branch skipped
+        self.assertEqual(result["_process"]["server_perf"], {})      # no perf data
+        self.assertFalse(any("perf record" in c for c in calls))     # branch skipped
+        # ... but the skip is ATTRIBUTED, so the bar renders "n/a" not zero-height
+        self.assertIn("perf_start_error", result["_process"])
+        self.assertIn("server PID unavailable", result["_process"]["perf_start_error"])
 
     def test_perf_record_stopped_on_exception_path(self):
         # Regression guard for a perf-record LEAK: if an exception (or Ctrl-C)
@@ -2163,6 +2171,28 @@ class TestSummaryAttribution(unittest.TestCase):
         # exactly one bar column annotated unavailable, not a hidden zero-height bar.
         self.assertEqual(svg.count(">n/a</text>"), 1)
 
+    def test_svg_start_failed_profile_in_ok_run_renders_na_not_zero_bar(self):
+        # Sibling of the test above for the OTHER half of the n/a gate: a run
+        # whose perf START failed (perf_start_error, e.g. PID unreadable or the
+        # ``perf record`` command itself failing) carries no server_perf.  The
+        # gate keys on perf_start_error OR perf_collection_error, so this run must
+        # also render "n/a", never a zero-height "no CPU consumers" bar.  Without
+        # the perf_start_error half of the gate this run would silently render as
+        # a clean empty bar (the masquerade _start_perf_record now attributes).
+        good = _summary_entry(self._idle_meta(), {"BW_average": 200, "MsgRate": 5})
+        failed = _summary_entry(self._idle_meta(), {"BW_average": 180, "MsgRate": 4})
+        with tempfile.TemporaryDirectory() as tmp:
+            good["_result_path"] = self._write_result(tmp, 1, {"hot_sym_clean": 60.0})
+            fp = Path(tmp) / "0002" / "result.json"
+            fp.parent.mkdir(parents=True)
+            fp.write_text(json.dumps(
+                {"_process": {"perf_start_error": "perf requested but server PID unavailable"}}))
+            failed["_result_path"] = str(fp)
+            svg = _svg_chart([good, failed])
+        self.assertIn("hot_sym_clean", svg)
+        self.assertNotIn("no valid runs", svg)
+        self.assertEqual(svg.count(">n/a</text>"), 1)
+
     # --- non-positive qp on the log2 x-axis (sweep default from=0) ----------
     # _expand defaults a {"to": N} sweep to from=0, so qp=0 is a reachable run.
     # The bw/rate (_line_chart) and cpu/mem (_multi_line_chart) panels place x
@@ -2197,6 +2227,22 @@ class TestSummaryAttribution(unittest.TestCase):
         self.assertIn("no valid runs", svg)
         # no bw/rate point was fabricated at the unrepresentable x=0
         self.assertEqual(svg.count("r='4' fill='#2563eb'"), 0)
+
+    def test_svg_qp_none_does_not_crash_indexes_positionally(self):
+        # A result.json can carry params.qp = null (YAML null / hand-edit).  The
+        # series builder must map a present-but-null qp to its positional index
+        # (i+1), NOT pass it to float().  The crux: dict.get("qp", i+1) returns
+        # the default only when the key is ABSENT -- a present None reaches
+        # float(None) and raises TypeError, aborting the whole report.  The
+        # None-walrus guard handles it; this asserts the null run still plots.
+        good = self._idle_meta(); good["parameters"] = {"qp": 4}
+        null_qp = self._idle_meta(); null_qp["parameters"] = {"qp": None}
+        e_good = _summary_entry(good, {"BW_average": 200, "MsgRate": 5})
+        e_null = _summary_entry(null_qp, {"BW_average": 150, "MsgRate": 3})
+        svg = _svg_chart([e_good, e_null])  # must not raise (no float(None))
+        # both runs plot: qp=4 at log2(4); null qp mapped to positional i+1=2 at log2(2)
+        self.assertEqual(svg.count("r='4' fill='#2563eb'"), 2)
+        self.assertNotIn("no valid runs", svg)
 
     # --- failed /proc grab on the FIRST run must not erase the whole table --
     # The per-core table once derived its column set from summary[0] alone.  If
@@ -2816,18 +2862,15 @@ class TestBuildPerftestCmdline(unittest.TestCase):
     """_build_perftest_cmdline builds args_str and duration_arg."""
 
     def test_no_iter_flag_uses_duration(self):
-        from rdma_sweep import _build_perftest_cmdline
         args_str, duration_arg = _build_perftest_cmdline(["-s", "64K"], 10)
         self.assertEqual(args_str, "-s 64K")
         self.assertEqual(duration_arg, "-D 10")
 
     def test_bare_n_flag_omits_duration(self):
-        from rdma_sweep import _build_perftest_cmdline
         args_str, duration_arg = _build_perftest_cmdline(["-n", "1000"], 10)
         self.assertEqual(duration_arg, "")
 
     def test_iters_flag_omits_duration(self):
-        from rdma_sweep import _build_perftest_cmdline
         args_str, duration_arg = _build_perftest_cmdline(["--iters=500"], 10)
         self.assertEqual(duration_arg, "")
 
@@ -6003,7 +6046,7 @@ class TestDrawSeriesPolyline(unittest.TestCase):
         _draw_series_polyline(self.el, self.pts, self.cx, self.cy, self.cw, self.ch,
                               self.xmn, self.xmx, self.ymn, self.ymx, "#000", r=3.5)
         for i in range(len(self.pts)):
-            self.assertIn(f"r='3.5'", self.el[i + 1])
+            self.assertIn("r='3.5'", self.el[i + 1])
 
     def test_circles_have_fill_color(self):
         """Circle elements carry the series color."""
