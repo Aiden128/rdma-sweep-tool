@@ -2425,9 +2425,9 @@ def _svg_chart(summary: list[dict[str, Any]], report_config: dict[str, Any] | No
     # failed (or whose metrics failed validation) is on disk carrying BOTH an
     # error AND a populated server-side profile.  Aggregating it into the "Top CPU
     # Consumers" chart would plot a failed run's profile as a valid measurement —
-    # the same masquerade ok_idx fixes for the bw/rate curve — so build perf_data
-    # (and its bar labels below) from successful runs only.
-    perf_data, top_syms, series = _load_perf_bar_series(summary, ok_idx)
+    # the same masquerade ok_idx fixes for the bw/rate curve — so the stacked-bar
+    # series (and its bar labels below) is built from successful runs only.
+    _, _, series = _load_perf_bar_series(summary, ok_idx)
 
     server_cpu_vals, client_cpu_vals, server_mem_vals, client_mem_vals, qf, server_ok, client_ok, cpu_key = _compute_sys_resource_data(summary, qps)
 
@@ -2436,7 +2436,7 @@ def _svg_chart(summary: list[dict[str, Any]], report_config: dict[str, Any] | No
 
     title, subtitle = _chart_title(summary, report_config)
 
-    el, W, H, M = _init_svg_chart(title, subtitle, num_combos=len(summary))
+    el, W, _, M = _init_svg_chart(title, subtitle, num_combos=len(summary))
 
     y = 56
     # Panel heights — named locals keep the height literal in sync across
