@@ -7,7 +7,7 @@ import shlex
 from dataclasses import dataclass
 from typing import Any
 
-from rdma_config import DEFAULT_SSH_CONFIG, deep_merge, parse_bool, strip_user
+from rdma_config import DEFAULT_SSH_CONFIG, _ensure_int, deep_merge, parse_bool, strip_user
 
 _LOCAL_HOSTS: set[str] = set()
 
@@ -39,9 +39,11 @@ class RemoteResult:
             return f"timed out on {self.host}: {self.command}"
         if self.exception:
             return self.exception
-        if self.stderr.strip():
+        if self.returncode != 0 and self.stderr.strip():
             return self.stderr.strip()
-        return f"exit {self.returncode}"
+        if self.returncode != 0:
+            return f"exit {self.returncode}"
+        return ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -134,9 +136,9 @@ def run_remote_result(
     remote_cmd = f"sudo {safe}" if sudo_enabled else safe
     ssh_args = [
         "ssh",
-        "-o", f"ConnectTimeout={int(effective_ssh.get('connect_timeout', 10))}",
-        *[str(opt) for opt in effective_ssh.get("options", [])],
-        host,
+        "-o", f"ConnectTimeout={_ensure_int(effective_ssh, 'connect_timeout', 10)}",
+        *[str(opt) for opt in (effective_ssh.get("options") or [])],
+        "--", host,
         remote_cmd,
     ]
     try:
@@ -166,26 +168,3 @@ def run_remote_result(
         return RemoteResult(host=host, command=cmd, returncode=1, exception=str(exc))
 
 
-def run_remote(
-    cmd: str,
-    host: str,
-    timeout: int = 300,
-    check: bool = True,
-    ssh_config: dict[str, Any] | None = None,
-    sudo: bool | None = None,
-) -> str:
-    result = run_remote_result(
-        cmd,
-        host,
-        timeout=timeout,
-        ssh_config=ssh_config,
-        sudo=sudo,
-    )
-    if check and not result.ok:
-        raise subprocess.CalledProcessError(
-            result.returncode,
-            cmd,
-            result.stdout,
-            result.stderr or result.error_summary(),
-        )
-    return result.stdout
