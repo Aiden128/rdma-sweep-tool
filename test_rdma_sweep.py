@@ -1065,9 +1065,10 @@ class TestRunPerftestPerfRecord(unittest.TestCase):
         # ... and the perf failure is logged in process metadata.
         self.assertIn("perf_start_error", result["_process"])
 
-    def test_perf_report_failure_aborts_with_clear_error(self):
-        # A failed ``perf report`` (e.g. corrupt/missing perf.data) must abort
-        # with a clear error rather than store a silently-empty attribution.
+    def test_perf_report_failure_preserves_bw_and_flags_error(self):
+        # A failed ``perf report`` (e.g. corrupt/missing perf.data) must NOT
+        # discard an already-valid BW measurement.  Mirror the perf-start path:
+        # preserve BW and record the diagnostic failure in _process.
         def fake(cmd, host, timeout=300, ssh_config=None, sudo=None):
             if "cat /tmp/test_server.pid" in cmd:
                 return RemoteResult(host=host, command=cmd, stdout="123\n")
@@ -1082,12 +1083,16 @@ class TestRunPerftestPerfRecord(unittest.TestCase):
             return RemoteResult(host=host, command=cmd)
 
         result = self._run(fake)
-        self.assertIn("error", result)
-        self.assertIn("perf report failed", result["error"])
+        # BW preserved — valid measurement not discarded
+        self.assertNotIn("error", result)
+        self.assertEqual(result["results"]["BW_average"], 42)
+        # perf failure attributed in _process, not silently swallowed
+        self.assertIn("perf_collection_error", result["_process"])
+        self.assertIn("perf report failed", result["_process"]["perf_collection_error"])
 
-    def test_perf_stop_failure_aborts_with_clear_error(self):
-        # A failed SIGINT-stop must abort with a clear error, not proceed to
-        # read a half-finalised perf.data.  (Sibling gate to start/report.)
+    def test_perf_stop_failure_preserves_bw_and_flags_error(self):
+        # A failed SIGINT-stop must NOT discard an already-valid BW measurement.
+        # Mirror the perf-start path: preserve BW and record the diagnostic failure.
         def fake(cmd, host, timeout=300, ssh_config=None, sudo=None):
             if "cat /tmp/test_server.pid" in cmd:
                 return RemoteResult(host=host, command=cmd, stdout="123\n")
@@ -1102,8 +1107,12 @@ class TestRunPerftestPerfRecord(unittest.TestCase):
             return RemoteResult(host=host, command=cmd)
 
         result = self._run(fake)
-        self.assertIn("error", result)
-        self.assertIn("perf stop failed", result["error"])
+        # BW preserved — valid measurement not discarded
+        self.assertNotIn("error", result)
+        self.assertEqual(result["results"]["BW_average"], 42)
+        # perf failure attributed in _process
+        self.assertIn("perf_collection_error", result["_process"])
+        self.assertIn("perf stop failed", result["_process"]["perf_collection_error"])
 
     def test_perf_skipped_when_server_pid_unreadable(self):
         # perf_record=True but the server PID is empty/non-numeric: perf is
@@ -2126,6 +2135,34 @@ class TestSummaryAttribution(unittest.TestCase):
         self.assertIn("real_sym_charted", svg)
         self.assertNotIn("null_sym", svg)
 
+    def test_svg_failed_profile_in_ok_run_renders_na_not_zero_bar(self):
+        # An OK run (valid BW, in ok_idx) whose perf profile was ATTEMPTED but
+        # failed to collect carries no server_perf — only perf_collection_error
+        # (or perf_start_error).  run_perftest now preserves such a run's valid
+        # BW instead of aborting it, so it reaches the stacked bar.  Its column
+        # must render "n/a" (profile unavailable), never a zero-height bar that
+        # masquerades as a clean "no CPU consumers" reading.  Sibling to the
+        # corrupt/missing-file None sentinel; here the file is valid JSON, so the
+        # gate is the error key, not the read failure.
+        good = _summary_entry(self._idle_meta(), {"BW_average": 200, "MsgRate": 5})
+        failed = _summary_entry(self._idle_meta(), {"BW_average": 180, "MsgRate": 4})
+        with tempfile.TemporaryDirectory() as tmp:
+            good["_result_path"] = self._write_result(tmp, 1, {"hot_sym_clean": 60.0})
+            # a readable, valid-JSON result.json whose profile failed to collect
+            fp = Path(tmp) / "0002" / "result.json"
+            fp.parent.mkdir(parents=True)
+            fp.write_text(json.dumps(
+                {"_process": {"perf_collection_error": "perf stop failed: timeout"}}))
+            failed["_result_path"] = str(fp)
+            svg = _svg_chart([good, failed])
+        # the good run's real profile IS charted ...
+        self.assertIn("hot_sym_clean", svg)
+        self.assertNotIn("no valid runs", svg)
+        # ... and the failed-profile run is the SOLE source of n/a here (both runs
+        # share identical default per-core data, so the table fabricates none):
+        # exactly one bar column annotated unavailable, not a hidden zero-height bar.
+        self.assertEqual(svg.count(">n/a</text>"), 1)
+
     # --- non-positive qp on the log2 x-axis (sweep default from=0) ----------
     # _expand defaults a {"to": N} sweep to from=0, so qp=0 is a reachable run.
     # The bw/rate (_line_chart) and cpu/mem (_multi_line_chart) panels place x
@@ -2203,8 +2240,10 @@ class TestSummaryAttribution(unittest.TestCase):
         self.assertIn(">cpu2</text>", svg)
         self.assertIn(">50.0</text>", svg)
         # ... but the narrow run, which never measured cpu2, shows the absent
-        # marker (exactly one such cell), NOT a fabricated 0.0.
-        self.assertEqual(svg.count(">n/a</text>"), 1)
+        # marker in the per-core table.  The stacked-bar panel also emits n/a
+        # annotations for runs whose result.json is absent (no temp files here),
+        # so the total count is > 1; assert at least one to cover the table case.
+        self.assertGreaterEqual(svg.count(">n/a</text>"), 1)
         # both grabs succeeded → no ERR anywhere (n/a and ERR are distinct cases)
         self.assertNotIn(">ERR</text>", svg)
 
@@ -4733,6 +4772,9 @@ class TestRunOneCombo(unittest.TestCase):
             self.assertEqual(data["results"]["BW_average"], 100.0)
             self.assertIn("_meta", data)
             self.assertEqual(data["_meta"]["duration"], 2)
+            # a clean run (no top-level error, no cleanup/perf-cleanup error) must
+            # NOT get a fabricated run_error — the promotion else-branch is gated.
+            self.assertNotIn("run_error", data["_meta"])
 
     def test_error_perftest_propagates_to_result(self):
         combo = {"msg_size": 64, "qp": 4}
@@ -4757,12 +4799,85 @@ class TestRunOneCombo(unittest.TestCase):
             self.assertEqual(data["error"], "client run failed: exit 2")
             self.assertIn("run_error", data["_meta"])
 
+    def test_perf_cleanup_error_promoted_to_run_error_keeps_bw(self):
+        # A run with valid BW but a LEAKED perf sampler (perf_cleanup_error) has
+        # no top-level "error", so without promotion it would pass silently with
+        # exit 0 while a privileged sampler contaminates the NEXT combo's CPU
+        # attribution.  _save_combo_result must promote it to _meta.run_error so
+        # it surfaces in the summary error column, is counted by
+        # _count_summary_errors, and forces a non-zero exit — WITHOUT discarding
+        # this run's already-valid bandwidth measurement.
+        combo = {"msg_size": 64, "qp": 4}
+        monitor = MagicMock(spec=SysMonitor)
+        monitor.grab.return_value = self._clean_grab()
+        result_files: list[Path] = []
+
+        with tempfile.TemporaryDirectory() as tmp:
+            out_path = Path(tmp)
+            with (
+                patch("rdma_sweep._build_args", return_value=["-q", "4"]),
+                patch("rdma_sweep.run_perftest", return_value={
+                    "results": {"BW_average": 100.0, "MsgRate": 1.0},
+                    "_process": {
+                        "server_perf": {},
+                        "perf_cleanup_error": "perf survived SIGKILL on pid 4242",
+                    },
+                }),
+            ):
+                result_path = _run_one_combo(
+                    1, combo, self._runtime(), monitor, monitor, out_path, result_files,
+                )
+
+            data = json.loads(result_path.read_text())
+            # valid BW is preserved (no top-level error swallows it) ...
+            self.assertNotIn("error", data)
+            self.assertEqual(data["results"]["BW_average"], 100.0)
+            # ... but the leak is promoted to a loud, attributed run_error ...
+            self.assertTrue(data["_meta"]["run_error"].startswith("cleanup_error:"))
+            self.assertIn("perf survived SIGKILL on pid 4242", data["_meta"]["run_error"])
+            # ... which the summary surfaces as a counted error while still
+            # carrying the valid BW value (flagged, not erased).
+            entry = _summary_entry(data["_meta"], data["results"])
+            self.assertTrue(entry["error"])
+            self.assertEqual(entry["BW_average"], 100.0)
+
+    def test_failed_server_grab_sets_sys_after_ok_false(self):
+        """A failed SysMonitor.grab() flows through _build_run_metadata and sets
+        server_sys_after_ok=False in the written result JSON.  This pins the
+        source-of-truth line so a regression (e.g. flipping the 'not in' check)
+        would break this test while leaving all other grab-mocked tests green."""
+        combo = {"msg_size": 64, "qp": 2}
+        monitor = MagicMock(spec=SysMonitor)
+        clean = self._clean_grab()
+        error_grab = {"error": "ssh timeout"}
+        # grab call order: before-server, before-client, after-server (fails), after-client
+        monitor.grab.side_effect = [clean, clean, error_grab, clean]
+        result_files: list[Path] = []
+
+        with tempfile.TemporaryDirectory() as tmp:
+            out_path = Path(tmp)
+            with (
+                patch("rdma_sweep._build_args", return_value=["-q", "2"]),
+                patch("rdma_sweep.run_perftest", return_value={
+                    "results": {"BW_average": 50.0, "MsgRate": 0.5},
+                    "_process": {"server_perf": {}, "client_usage": {}},
+                }),
+            ):
+                result_path = _run_one_combo(
+                    1, combo, self._runtime(), monitor, monitor, out_path, result_files,
+                )
+
+            data = json.loads(result_path.read_text())
+            self.assertIs(data["_meta"]["server_sys_after_ok"], False)
+            self.assertIs(data["_meta"]["client_sys_after_ok"], True)
+
 
 class TestLoadPerfBarSeriesErrorPaths(unittest.TestCase):
     """_load_perf_bar_series handles corrupt/missing result.json without crashing."""
 
-    def test_corrupt_json_returns_empty(self):
-        """Invalid JSON in result.json produces empty perf_data entries."""
+    def test_corrupt_json_returns_none_sentinel(self):
+        """Invalid JSON in result.json produces a None sentinel (profile unavailable),
+        distinct from {} (perf disabled/no consumers)."""
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp)
             run_dir = out / "0001"
@@ -4776,7 +4891,7 @@ class TestLoadPerfBarSeriesErrorPaths(unittest.TestCase):
             }
             perf_data, _syms, _series = _load_perf_bar_series([entry], [0])
             self.assertEqual(len(perf_data), 1)
-            self.assertEqual(perf_data[0], {})
+            self.assertIsNone(perf_data[0])
 
 
 class TestLaunchServerAndGetPidErrorPaths(unittest.TestCase):

@@ -782,12 +782,15 @@ def _finalize_perf_collection(
     if not perf_started:
         return {}, None
 
-    # Stop perf with SIGINT (flushes data and exits gracefully)
+    # Stop perf with SIGINT (flushes data and exits gracefully).
+    # Intentionally omit rm -f here: the finally-path _cancel_perf_record already
+    # handles kill-verify + pid-file removal with SIGKILL escalation and liveness
+    # check.  Leaving the pid file in place ensures the finally-net can still act
+    # if perf survives the SIGINT (e.g. mid-flush of a large callchain perf.data).
     perf_stop = _record_command(process, "perf_stop", _run_remote_result(
         f"ppid=$(cat {perf_pid_q} 2>/dev/null) && "
         f"kill -INT $ppid 2>/dev/null; "
-        f"sleep 2; "  # wait for perf to finalise perf.data
-        f"rm -f {perf_pid_q}",
+        f"sleep 2",  # wait for perf to finalise perf.data
         server_host,
         timeout=15,
         ssh_config=ssh_config,
@@ -1095,8 +1098,13 @@ def run_perftest(
             server_host, ssh_config, process,
         )
         if perf_err:
-            return _make_server_error_result(perf_err, server_host, server_log_q, ssh_config, process)
-        process["server_perf"] = perf_report
+            # Mirror the perf-start failure path (lines 722-726): a diagnostic
+            # perf stop/report failure must NOT discard an already-valid BW
+            # measurement.  Record the error and fall through to _read_client_result
+            # so the BW is preserved and the perf failure is attributed separately.
+            process["perf_collection_error"] = perf_err
+        else:
+            process["server_perf"] = perf_report
 
         # Read JSON result
         result = _read_client_result(
@@ -1244,11 +1252,13 @@ def _cancel(
     place as forensic evidence — they hold detail not preserved in the parsed
     result.json, and one small dir per run is an acceptable cost for that.
 
-    Also a safety net for ``perf record``: the happy path stops perf inline (and
-    removes ``perf_pid_file``) before reading its report, but an exception or
-    Ctrl-C between perf-start and that inline stop would otherwise leave a
-    privileged ``perf record`` sampling on the server forever, per failed run.
-    Here we stop it from the ``finally`` path.  Idempotent: a no-op once
+    Also a safety net for ``perf record``: the happy path stops perf inline with
+    SIGINT before reading its report but deliberately leaves ``perf_pid_file`` for
+    this net to clear (see ``_finalize_perf_collection``).  An exception or Ctrl-C
+    between perf-start and that inline stop, or a ``perf`` that outlives the SIGINT
+    mid-flush of a large callchain, would otherwise leave a privileged ``perf
+    record`` sampling on the server forever, per failed run.  Here we verify-kill
+    it from the ``finally`` path and remove the pid file.  Idempotent: a no-op once
     ``perf_pid_file`` is gone.  PID-reuse-safe: we only signal a pid whose live
     command line still names OUR run-specific ``-o <perf_data>`` target (the
     same identity discipline as the server kill above).
@@ -1636,6 +1646,15 @@ def _save_combo_result(
     result["_meta"] = meta
     if "error" in result:
         result["_meta"]["run_error"] = result["error"]
+    else:
+        # Promote cleanup/perf-cleanup errors so they appear in the summary error
+        # column, are counted by _count_summary_errors, and cause main() to exit
+        # non-zero.  A leaked perf-record sampler (perf_cleanup_error) is flagged
+        # with the same prominence since it contaminates the NEXT combo's attribution.
+        process_info = result.get("_process", {})
+        cleanup_err = process_info.get("cleanup_error") or process_info.get("perf_cleanup_error")
+        if cleanup_err:
+            result["_meta"]["run_error"] = f"cleanup_error: {cleanup_err}"
 
     combo_dir = out_path / f"{combo_idx:04d}"
     combo_dir.mkdir(parents=True, exist_ok=True)
@@ -1801,10 +1820,14 @@ def run_sweep(config: dict[str, Any], output_dir: str = "sweep_results") -> list
     # QP) raises before any perftest run is dispatched, not mid-sweep with
     # orphaned runs already launched.
     _combos = list(sweep_config(config))
-    for combo_idx, combo in enumerate(_combos, 1):
-        _run_one_combo(combo_idx, combo, runtime, server_monitor, client_monitor, out_path, result_files)
-
-    _write_summary(result_files, out_path)
+    try:
+        for combo_idx, combo in enumerate(_combos, 1):
+            _run_one_combo(combo_idx, combo, runtime, server_monitor, client_monitor, out_path, result_files)
+    finally:
+        # Write summary even on a mid-sweep abort (disk error, scheduler kill, etc.)
+        # so completed combos remain reportable without manual reconstruction.
+        if result_files:
+            _write_summary(result_files, out_path)
     return result_files
 
 
@@ -2077,13 +2100,12 @@ def _compute_metric_series(
     over ok_idx, and classify the sweep as latency vs throughput using a
     fallback-scope heuristic for all-failed runs.
     """
-    qps = [_get_dict(e, "params").get("qp", i + 1) for i, e in enumerate(summary)]
+    qps = [
+        i + 1 if (v := _get_dict(e, "params").get("qp")) is None else v
+        for i, e in enumerate(summary)
+    ]
     ok_idx = [i for i, e in enumerate(summary) if not e.get("error")]
     bw_x = [float(qps[i]) for i in ok_idx]
-    # .get(key, default) returns default only when key is ABSENT, not when value
-    # is None; the ``or 0`` guard coerces stored-None (YAML null in result.json) to
-    # 0.0 so the float() call does not crash.  Genuine 0.0 measurements are valid
-    # per _validate_perftest_metrics and pass through unchanged (0.0 or 0 → 0.0).
     bw_vals = _extract_metric(summary, ok_idx, "BW_average")
     rate_vals = _extract_metric(summary, ok_idx, "MsgRate")
 
@@ -2106,22 +2128,35 @@ def _compute_metric_series(
     return MetricSeries(qps, ok_idx, bw_x, bw_vals, rate_vals, lat_vals, is_latency)
 
 
-def _load_perf_bar_series(summary: list[dict[str, Any]], ok_idx: list[int]) -> tuple[list[dict[str, Any]], list[str], list[tuple[str, list[float]]]]:
+def _load_perf_bar_series(summary: list[dict[str, Any]], ok_idx: list[int]) -> tuple[list[dict[str, Any] | None], list[str], list[tuple[str, list[float]]]]:
     """Build stacked-bar chart series from per-run server_perf profiles."""
-    perf_data = []
+    perf_data: list[dict[str, Any] | None] = []
     for i in ok_idx:
         p = Path(summary[i].get("_result_path", f"{i+1:04d}/result.json"))
         if p.exists():
             try:
                 d = _read_json(p)
+                proc = _get_dict(d, "_process")
+                if proc.get("perf_start_error") or proc.get("perf_collection_error"):
+                    # ponytail: a profile was ATTEMPTED but its start or stop/report
+                    # failed, leaving no server_perf.  None → "n/a" marker: never a
+                    # zero-height bar masquerading as a clean "no CPU consumers"
+                    # reading.  ({} below stays zero-height — perf disabled / a real
+                    # profile that genuinely found nothing, both honestly empty.)
+                    perf_data.append(None)
+                else:
+                    perf_data.append(_get_dict(proc, "server_perf"))
             except (json.JSONDecodeError, OSError):
-                d = {}
-            perf_data.append(_get_dict(_get_dict(d, "_process"), "server_perf"))
+                # ponytail: None sentinel = profile unavailable (corrupt/missing file),
+                # distinct from {} = profile present but empty (perf disabled).
+                perf_data.append(None)
         else:
-            perf_data.append({})
+            perf_data.append(None)
 
     all_syms = set()
     for pd in perf_data:
+        if pd is None:
+            continue
         for s, v in sorted(pd.items(), key=lambda x: -(x[1] or 0))[:5]:
             # ``v or 0`` mirrors the None-safe sort key above: a corrupt or
             # hand-edited result.json could carry a null self-% here, and a
@@ -2129,10 +2164,13 @@ def _load_perf_bar_series(summary: list[dict[str, Any]], ok_idx: list[int]) -> t
             # report instead of just skipping the bad symbol.
             if (v or 0) > 0:
                 all_syms.add(s)
-    sym_total = {s: sum(pd.get(s, 0) or 0 for pd in perf_data) for s in all_syms}
+    sym_total = {s: sum(pd.get(s, 0) or 0 for pd in perf_data if pd is not None) for s in all_syms}
     top_syms = sorted(sym_total, key=lambda s: -sym_total[s])[:7]
 
-    series = [(sym, [pd.get(sym, 0) or 0 for pd in perf_data]) for sym in top_syms]
+    # None entries (unavailable profile) get 0 for every symbol — the bar column
+    # will render with zero height; _stacked_bar receives the None list so it can
+    # annotate those columns with "n/a".
+    series = [(sym, [pd.get(sym, 0) or 0 if pd is not None else 0 for pd in perf_data]) for sym in top_syms]
     return perf_data, top_syms, series
 
 
@@ -2427,7 +2465,7 @@ def _svg_chart(summary: list[dict[str, Any]], report_config: dict[str, Any] | No
     # Consumers" chart would plot a failed run's profile as a valid measurement —
     # the same masquerade ok_idx fixes for the bw/rate curve — so the stacked-bar
     # series (and its bar labels below) is built from successful runs only.
-    _, _, series = _load_perf_bar_series(summary, ok_idx)
+    perf_profiles, _, series = _load_perf_bar_series(summary, ok_idx)
 
     server_cpu_vals, client_cpu_vals, server_mem_vals, client_mem_vals, qf, server_ok, client_ok, cpu_key = _compute_sys_resource_data(summary, qps)
 
@@ -2462,7 +2500,7 @@ def _svg_chart(summary: list[dict[str, Any]], report_config: dict[str, Any] | No
         _multi_line_chart(el, qf, chart_series, label, ylbl, *_chart_panel(el, cx, y, cw, MID_H))
 
     y += MID_H + M
-    _stacked_bar(el, [str(qps[i]) for i in ok_idx], series, *_chart_panel(el, M, y, W - 2 * M, BAR_H))
+    _stacked_bar(el, [str(qps[i]) for i in ok_idx], series, perf_profiles, *_chart_panel(el, M, y, W - 2 * M, BAR_H))
 
     y += BAR_H + M
     th = 30 + 24 * (len(table_rows) + 1)
@@ -2725,7 +2763,7 @@ def _multi_line_chart(
         _chart_legend_item(el, cx + cw + 14, ly, clr, name)
 
 
-def _stacked_bar(el: list[str], xlb: list[str], series: list[tuple[str, list[float]]], x: float, y: float, w: float, h: float) -> None:
+def _stacked_bar(el: list[str], xlb: list[str], series: list[tuple[str, list[float]]], perf_profiles: list[dict[str, Any] | None], x: float, y: float, w: float, h: float) -> None:
     pl, pr, pb, pt = 50, 160, 40, 40
     cx, cy, cw, ch = _chart_area(x, y, w, h, pl, pr, pb, pt)
     n = len(xlb)
@@ -2741,6 +2779,21 @@ def _stacked_bar(el: list[str], xlb: list[str], series: list[tuple[str, list[flo
     for si in range(n):
         bx = cx + gap + si * (bw + gap)
         _chart_x_label(el, bx + bw / 2, cy, ch, html.escape(xlb[si]))
+        # Mark columns whose profile is unavailable — corrupt/missing result.json,
+        # or a profile that was attempted but failed to collect (perf start or
+        # stop/report error) — so they stay visually distinct from a run that
+        # genuinely had no top consumers (a real but empty profile).
+        if si < len(perf_profiles) and perf_profiles[si] is None:
+            el.append(
+                f"<rect x='{bx}' y='{cy}' width='{bw}' height='{ch}' "
+                f"fill='#e2e8f0' stroke='#94a3b8' stroke-width='1' stroke-dasharray='4,2'/>"
+            )
+            el.append(
+                f"<text x='{bx + bw / 2}' y='{cy + ch / 2}' "
+                f"font-family='system-ui,sans-serif' font-size='9' fill='#64748b' "
+                f"text-anchor='middle'>n/a</text>"
+            )
+            continue
         bottom = 0.0
         for ci, (_, vals) in enumerate(series):
             v = vals[si]
