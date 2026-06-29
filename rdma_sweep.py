@@ -2038,7 +2038,23 @@ def _cpu_core_keys(cpu_data: dict[str, Any]) -> list[str]:
 
 
 def _cpu_avg(cpu_per_core: dict[str, Any]) -> float | str:
-    cpu_vals = [float(cpu_per_core[k]) for k in _cpu_core_keys(cpu_per_core)]
+    """Average the per-core CPU values, skipping cores with no reading.
+
+    ``_cpu_core_keys`` filters by key *name*, never by value, so a corrupt or
+    partially-written ``result.json`` carrying ``{"cpu0": null}`` would reach
+    ``float(None)`` and abort the entire report (the same present-``None``-from
+    -disk threat ``_extract_metric`` documents).  Skip ``None`` cores so a
+    missing core degrades like the per-core table's "n/a" instead of crashing,
+    and so the average stays honest over the cores that *were* measured rather
+    than folding a missing reading in as a fabricated 0% (``float(v or 0)``
+    would masquerade an absent core as a clean idle one).  An all-``None`` dict
+    yields ``""``, matching the empty-dict rendering.
+    """
+    cpu_vals = [
+        float(cpu_per_core[k])
+        for k in _cpu_core_keys(cpu_per_core)
+        if cpu_per_core[k] is not None
+    ]
     return round(sum(cpu_vals) / len(cpu_vals), 1) if cpu_vals else ""
 
 
@@ -2056,7 +2072,12 @@ def _mem_delta_mib(entry: dict[str, Any], key: str) -> float:
     raw = memory.get("MemUsedDelta", "")
     try:
         return parse_size(str(raw)) / (1024 * 1024)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
+        # OverflowError covers an inf-shaped delta string ("infT" -> int(inf))
+        # in a corrupt/hand-edited result.json; it is not a ValueError subclass,
+        # so it would otherwise escape this guard and abort the whole report.
+        # Return 0.0 like every other malformed MemUsedDelta -- the sys_ok flags
+        # already drop failed-grab points from the plotted series.
         return 0.0
 
 
@@ -2223,7 +2244,17 @@ def _core_cell(per_core: dict[str, Any], core: str) -> str:
     # absent measurement is never mistaken for a clean one (the inverse of
     # the masquerade we guard).  "ERR" below is the distinct case where the
     # whole /proc grab for that run failed.
-    return f"{per_core[core]:.1f}" if core in per_core else "n/a"
+    #
+    # ``.get(core)`` with an ``is not None`` test (not ``core in``) also folds a
+    # present-but-``null`` value from a corrupt/partial result.json into the
+    # "n/a" case: the key exists but holds no reading, so ``f"{None:.1f}"`` would
+    # otherwise crash the whole report.  This is the per-core *table* sibling of
+    # the same present-None-from-disk guard in ``_cpu_avg`` / ``_extract_metric``
+    # — ``_svg_chart`` consumes this dict on both paths in one report build.  A
+    # genuine idle ``0.0`` is *not* ``None``, so it still renders "0.0", never
+    # "n/a" (a real measurement must never read as absent).
+    v = per_core.get(core)
+    return f"{v:.1f}" if v is not None else "n/a"
 
 
 def _compute_core_table_data(

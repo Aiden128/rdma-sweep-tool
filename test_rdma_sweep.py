@@ -36,6 +36,7 @@ from rdma_sweep import (
     _chart_y_label,
     _compute_node_deltas,
     _config_int,
+    _core_cell,
     _record_command,
     _run_cleanup_cmd,
     _dry_run_print,
@@ -51,6 +52,7 @@ from rdma_sweep import (
     _load_perf_bar_series,
     _make_process_tracker,
     _make_server_error_result,
+    _mem_delta_mib,
     _mem_used_kb,
     _or_err,
     _read_client_time_usage,
@@ -1920,6 +1922,63 @@ class TestSummaryAttribution(unittest.TestCase):
         self.assertEqual(entry["params"], {})
         self.assertEqual(entry["memory"], {})
         self.assertEqual(entry["server_memory"], {})
+
+    def test_entry_with_null_per_core_values_skips_them_not_crash(self):
+        """A present-but-null per-core *value* must be skipped, never crash/0.
+
+        Distinct from test_entry_with_null_meta_fields_does_not_crash above,
+        which covers the *whole* per-core dict being null (_get_dict -> {}).
+        Here the dict is present with null *values* ({"cpu0": null}), which
+        _get_dict passes through untouched, so _cpu_avg's float() would hit
+        float(None) and abort the entire report unless it skips null cores --
+        the un-fixed _cpu_avg sibling of the qp=null disk-corruption defense
+        (mirrors _extract_metric's documented present-None-from-disk guard).
+        """
+        meta = self._idle_meta()
+        # cpu0 came back null (partial/corrupt result.json); cpu1 measured 50.0
+        meta["server_cpu_util_per_core"] = {"cpu0": None, "cpu1": 50.0}
+        # every client core null -> zero measured cores -> "" (not a crash/0)
+        meta["client_cpu_util_per_core"] = {"cpu0": None, "cpu1": None}
+        entry = _summary_entry(meta, {"BW_average": 100})
+        # honest average over the ONE measured core -- NOT (0+50)/2=25.0, which
+        # would masquerade the absent cpu0 as a clean idle 0% (float(v or 0))
+        self.assertEqual(entry["server_cpu_avg"], 50.0)
+        # all-null degrades to "" like the empty-dict case, never crash or 0.0
+        self.assertEqual(entry["client_cpu_avg"], "")
+
+    def test_mem_delta_mib_inf_string_coerces_to_zero_not_crash(self):
+        """An inf-shaped MemUsedDelta must coerce to 0.0, not abort the report.
+
+        parse_size("infT") evaluates int(float("inf") * 1024**4) -> Overflow
+        Error, which is NOT a ValueError subclass, so it escaped the
+        (TypeError, ValueError) guard and aborted the whole report.  Only
+        reachable from a corrupt/hand-edited result.json (format_size never
+        emits an inf-shaped string), but the guard's evident intent is "any
+        malformed MemUsedDelta -> 0.0, never crash"; OverflowError was the hole.
+        """
+        self.assertEqual(_mem_delta_mib({"m": {"MemUsedDelta": "infT"}}, "m"), 0.0)
+        # sanity: a well-formed delta still parses (guard didn't swallow data)
+        self.assertEqual(_mem_delta_mib({"m": {"MemUsedDelta": "1M"}}, "m"), 1.0)
+
+    def test_core_cell_present_null_value_renders_na_not_crash(self):
+        """The per-core *table* sibling of _cpu_avg: present-null -> "n/a".
+
+        _svg_chart consumes the same disk-sourced per-core dict on BOTH the
+        average path (_cpu_avg) and the table path (_core_cell) in one report
+        build, so a corrupt/partial result.json carrying {"cpu0": null} must
+        not abort here either.  The old `core in per_core` test guarded key
+        *absence* only, so a present-null value reached f"{None:.1f}" and
+        crashed the whole report.  "n/a" (not 0.0) keeps it honest; a genuine
+        idle 0.0 must still render "0.0" (a real reading is never shown absent).
+        """
+        # present-null value -> "n/a" (absent-measurement sentinel, never 0.0)
+        self.assertEqual(_core_cell({"cpu0": None, "cpu1": 50.0}, "cpu0"), "n/a")
+        # a real value alongside it still renders (guard didn't swallow data)
+        self.assertEqual(_core_cell({"cpu0": None, "cpu1": 50.0}, "cpu1"), "50.0")
+        # GENUINE idle 0.0% must stay "0.0", NOT become "n/a" (inverse masquerade)
+        self.assertEqual(_core_cell({"cpu0": 0.0}, "cpu0"), "0.0")
+        # absent core still "n/a" (pre-existing union-gap behavior preserved)
+        self.assertEqual(_core_cell({"cpu0": 50.0}, "cpu9"), "n/a")
 
     def test_entry_with_null_results_returns_no_metrics(self):
         """_summary_entry handles results=None without crashing or injecting stale metrics."""
