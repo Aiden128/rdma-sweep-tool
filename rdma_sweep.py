@@ -1417,6 +1417,11 @@ def _validate_qp_positive(combo: dict[str, Any]) -> None:
     string passes through (perftest and the chart's ``float()`` both accept
     it), while a genuinely non-numeric value raises the same clear, loud
     error rather than an opaque ``TypeError`` that would abort the sweep.
+
+    ``nan``/``inf`` (reachable from YAML ``.nan``/``.inf``) are rejected too:
+    both pass a bare ``<= 0`` test, so without this guard they would slip
+    through to perftest as ``-q nan`` and produce the always-ERR run this
+    validator exists to catch early.
     """
     qp_val = combo.get("qp")
     if qp_val is None:
@@ -1428,6 +1433,11 @@ def _validate_qp_positive(combo: dict[str, Any]) -> None:
             f"QP must be numeric, got {qp_val!r}. "
             "Use unquoted numbers in the QP values list (e.g. [1, 2, 4], not ['1', '2'])."
         ) from None
+    if not math.isfinite(qp_num):
+        raise ValueError(
+            f"QP must be a finite number, got {qp_val!r}. "
+            "Remove nan/inf from the QP values list."
+        )
     if qp_num <= 0:
         raise ValueError(
             f"QP must be positive, got {qp_val}. "

@@ -3357,6 +3357,25 @@ class TestSweepConfig(unittest.TestCase):
             list(sweep_config({"sweep": [{"name": "qp", "values": ["fast"]}]}))
         self.assertIn("QP must be numeric", str(ctx.exception))
 
+    def test_qp_nan_raises_finite_error(self):
+        """qp=nan (YAML .nan) is rejected, not dispatched as -q nan.
+
+        ``float('nan') <= 0`` is False, so without an explicit finite check a
+        NaN qp would pass validation and reach perftest as an always-ERR run —
+        exactly what this validator exists to catch early.
+        """
+        from rdma_sweep import sweep_config
+        with self.assertRaises(ValueError) as ctx:
+            list(sweep_config({"sweep": [{"name": "qp", "values": [float("nan")]}]}))
+        self.assertIn("finite", str(ctx.exception))
+
+    def test_qp_inf_raises_finite_error(self):
+        """qp=inf (YAML .inf) is rejected for the same reason as nan."""
+        from rdma_sweep import sweep_config
+        with self.assertRaises(ValueError) as ctx:
+            list(sweep_config({"sweep": [{"name": "qp", "values": [float("inf")]}]}))
+        self.assertIn("finite", str(ctx.exception))
+
 
 # ---------------------------------------------------------------------------
 # run_sweep  (3 scenarios)
