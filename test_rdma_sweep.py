@@ -1706,6 +1706,28 @@ class TestExpand(unittest.TestCase):
         with self.assertRaises(ValueError):
             _expand({"from": 1, "to": 8, "step": -1})
 
+    def test_nan_from_raises_finite_error(self):
+        """nan 'from' must raise a clear 'finite' error, not an opaque
+        ``int(nan)`` ValueError from the range arithmetic."""
+        with self.assertRaises(ValueError) as ctx:
+            _expand({"from": float("nan"), "to": 8})
+        self.assertIn("finite", str(ctx.exception))
+
+    def test_inf_to_raises_finite_error(self):
+        """inf 'to' must raise a clear 'finite' error.  Pre-guard this produced
+        an ``OverflowError`` (not even a ValueError) from ``int(inf)``."""
+        with self.assertRaises(ValueError) as ctx:
+            _expand({"from": 1, "to": float("inf")})
+        self.assertIn("finite", str(ctx.exception))
+
+    def test_inf_step_raises_not_silent_nan(self):
+        """A step of inf must fail loud.  Without the guard it silently
+        collapses to a single ``[nan]`` value (0 * inf == nan), injecting
+        garbage into the sweep instead of raising."""
+        with self.assertRaises(ValueError) as ctx:
+            _expand({"from": 1, "to": 8, "step": float("inf")})
+        self.assertIn("finite", str(ctx.exception))
+
     def test_to_less_than_from_raises(self):
         bad = {"from": 8, "to": 1}
         with self.assertRaises(ValueError) as ctx:

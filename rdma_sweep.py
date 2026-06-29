@@ -1342,8 +1342,8 @@ def _validate_perftest_metrics(binary: str, result: dict[str, Any]) -> str:
 def _expand_range(param: dict[str, Any]) -> list[Any]:
     """Expand a sweep range dict (``from``/``to``/``step``) into a list of values.
 
-    Raises ``ValueError`` on missing/non-numeric keys, non-positive step,
-    or ``to < from``.
+    Raises ``ValueError`` on missing/non-numeric keys, non-finite (nan/inf)
+    values, non-positive step, or ``to < from``.
     """
     lo = _config_val(param, "from", 0)
     # A range dict needs 'to'; a bare param["to"] would raise an opaque
@@ -1360,6 +1360,17 @@ def _expand_range(param: dict[str, Any]) -> list[Any]:
         raise ValueError(
             f"sweep 'from'/'to'/'step' must be numeric (int/float; bool not accepted), "
             f"got lo={lo!r} hi={hi!r} step={step!r}"
+        )
+    # A nan/inf value passes the isinstance check above (both are float
+    # instances) but corrupts the range arithmetic below: int(nan - lo) raises
+    # an opaque ValueError, int(inf) an OverflowError, and a step of inf
+    # silently collapses to a single nan value (0 * inf == nan), injecting
+    # garbage into the sweep instead of failing loud.  Reject non-finite values
+    # with a clear message, mirroring qp validation in _validate_qp_positive.
+    if not all(math.isfinite(v) for v in (lo, hi, step)):
+        raise ValueError(
+            f"sweep 'from'/'to'/'step' must be finite (no nan/inf), "
+            f"got lo={lo!r} hi={hi!r} step={step!r} in {param!r}"
         )
     # Fail loud on a bad sweep spec rather than hang or run zero combos: a
     # non-positive step produces a nonsensical or empty counter-based range
