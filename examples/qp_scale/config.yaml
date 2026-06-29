@@ -25,6 +25,13 @@ perftest:
   wait_timeout: 30
   default_port: 18515
   env: {}
+  fixed:
+    port: 18515
+    msg_size: 64
+    device: roce-device-name
+    # Replace with the RoCEv2 IPv4 GID index from show_gids.
+    gid_index: 5
+    force_link: Ethernet
 
 ssh:
   sudo: true
@@ -40,12 +47,14 @@ report:
   subtitle: sanitized real two-node sweep - ib_write_bw
 
 fixed:
-  port: 18515
-  msg_size: 64
-  device: roce-device-name
-  # Replace with the RoCEv2 IPv4 GID index from show_gids.
-  gid_index: 5
-  force_link: Ethernet
+  server:
+    rdma_device: mlx5_0
+    netdev: server-rdma-netdev
+    mtu: 4200
+  client:
+    rdma_device: mlx5_1
+    netdev: client-rdma-netdev
+    mtu: 4200
 
 sweep:
   - name: qp

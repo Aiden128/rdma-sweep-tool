@@ -46,6 +46,9 @@ from rdma_sweep import (
     _expand,
     _extract_metric,
     _filter_positive_x,
+    _check_fixed_config,
+    _fixed_check_shell,
+    FixedConfigError,
     _get_dict,
     _handle_run_exception,
     _launch_server_and_get_pid,
@@ -354,6 +357,10 @@ class TestDualHostConfig(unittest.TestCase):
                 "address": "rdma-server.example.com",
             },
             "client": {"host": "client-user@example-client"},
+            "fixed": {
+                "server": {"netdev": "enp4s0f0np0", "mtu": 4200},
+                "client": {"netdev": "enp4s0f1np1", "mtu": 4200},
+            },
             "perftest": {
                 "dir": "/opt/perftest",
                 "rdma_core_lib": "/opt/rdma-core/build/lib",
@@ -371,6 +378,8 @@ class TestDualHostConfig(unittest.TestCase):
         self.assertEqual(runtime["server"]["host"], "server-admin@example-server")
         self.assertEqual(runtime["server"]["address"], "rdma-server.example.com")
         self.assertEqual(runtime["client"]["host"], "client-user@example-client")
+        self.assertEqual(runtime["fixed"]["server"]["netdev"], "enp4s0f0np0")
+        self.assertEqual(runtime["fixed"]["client"]["mtu"], 4200)
         self.assertEqual(runtime["perftest"]["dir"], "/opt/perftest")
         self.assertEqual(runtime["perftest"]["json_file"], "/tmp/custom.json")
         self.assertEqual(runtime["ssh"]["sudo"], False)
@@ -416,6 +425,57 @@ class TestDualHostConfig(unittest.TestCase):
                 "client": {"host": "client-ssh"},
             })
 
+    def test_top_level_fixed_must_be_mapping(self):
+        with self.assertRaisesRegex(ValueError, "fixed"):
+            _runtime_config({
+                "server": {"host": "server-ssh", "address": "10.0.0.2"},
+                "client": {"host": "client-ssh"},
+                "perftest": {"dir": "/opt/perftest"},
+                "fixed": ["server.mtu=4200"],
+            })
+
+    def test_top_level_fixed_empty_list_must_be_mapping(self):
+        with self.assertRaisesRegex(ValueError, "fixed"):
+            _runtime_config({
+                "server": {"host": "server-ssh", "address": "10.0.0.2"},
+                "client": {"host": "client-ssh"},
+                "perftest": {"dir": "/opt/perftest"},
+                "fixed": [],
+            })
+
+    def test_fixed_side_rejects_address_and_ip_together(self):
+        with self.assertRaisesRegex(ValueError, "only one of address or ip"):
+            _runtime_config({
+                "server": {"host": "server-ssh", "address": "10.0.0.2"},
+                "client": {"host": "client-ssh"},
+                "perftest": {"dir": "/opt/perftest"},
+                "fixed": {
+                    "server": {
+                        "netdev": "enp4s0f0np0",
+                        "address": "10.0.0.2",
+                        "ip": "10.0.0.3",
+                    },
+                },
+            })
+
+    def test_fixed_side_validation_rejects_bad_shapes(self):
+        cases = [
+            ({"server": "netdev=enp4s0f0np0"}, "fixed.server"),
+            ({"server": {"bogus": "x"}}, "unsupported key"),
+            ({"server": {"netdev": "enp4s0f0np0", "sysctl": ["net.core.busy_poll=50"]}}, "sysctl"),
+            ({"server": {"mtu": 4200}}, "netdev is required"),
+            ({"server": {"rdma_state": "ACTIVE"}}, "rdma_device is required"),
+        ]
+        for fixed, message in cases:
+            with self.subTest(fixed=fixed):
+                with self.assertRaisesRegex(ValueError, message):
+                    _runtime_config({
+                        "server": {"host": "server-ssh", "address": "10.0.0.2"},
+                        "client": {"host": "client-ssh"},
+                        "perftest": {"dir": "/opt/perftest"},
+                        "fixed": fixed,
+                    })
+
     def test_ssh_defaults_verify_host_keys(self):
         runtime = _runtime_config({
             "server": {"host": "server-ssh", "address": "10.0.0.2"},
@@ -451,6 +511,7 @@ class TestBuildArgsConfigKeys(unittest.TestCase):
             "qp": 4,
             "port": 18515,
             "duration": 5,
+            "fixed": {"server": {"netdev": "enp4s0f0np0"}},
             "server": {"host": "server-ssh"},
             "client": {"host": "client-ssh"},
             "perftest": {"dir": "/tmp/perftest"},
@@ -479,6 +540,7 @@ class TestBuildArgsConfigKeys(unittest.TestCase):
         self.assertNotIn("-D", args)
         self.assertNotIn("--server", args)
         self.assertNotIn("--client", args)
+        self.assertNotIn("--fixed", args)
 
     def test_rejects_valueless_config_key(self):
         # A YAML key written with no value parses to None (e.g. `inline:`) or
@@ -504,6 +566,87 @@ class TestBuildArgsConfigKeys(unittest.TestCase):
         # only genuinely-empty []/{} are "no value".  Pins the boundary so a
         # future "simplify to bare `not v`" refactor cannot silently regress.
         self.assertEqual(_build_args({"inline": [0]}), ["-I", "[0]"])
+
+
+class TestFixedConfigChecks(unittest.TestCase):
+    """Top-level fixed config is validated as read-only RDMA/OS state."""
+
+    def _runtime(self) -> dict[str, Any]:
+        return {
+            "server": {"host": "server-ssh", "address": "10.0.0.2"},
+            "client": {"host": "client-ssh"},
+            "ssh": {"sudo": True, "allow_local": False, "connect_timeout": 10, "options": []},
+            "fixed": {
+                "server": {"rdma_device": "mlx5_0", "netdev": "enp4s0f0np0", "mtu": 4200},
+                "client": {"netdev": "enp4s0f1np1", "sysctl": {"net.core.busy_poll": 50}},
+            },
+        }
+
+    def test_fixed_check_shell_is_read_only(self):
+        cmd = _fixed_check_shell("server", {
+            "rdma_device": "mlx5_0",
+            "netdev": "enp4s0f0np0",
+            "mtu": 4200,
+            "address": "10.0.0.2",
+            "operstate": "up",
+            "rdma_state": "ACTIVE",
+            "sysctl": {"net.core.busy_poll": 50},
+        })
+
+        self.assertIn("rdma link", cmd)
+        self.assertIn("/sys/class/net", cmd)
+        self.assertIn("sysctl -n", cmd)
+        self.assertIn("ip -o addr show", cmd)
+        for mutating in (
+            "ip link set",
+            "sysctl -w",
+            "ethtool -s",
+            "devlink dev param set",
+            "tee /sys",
+            "> /sys",
+        ):
+            self.assertNotIn(mutating, cmd)
+
+    def test_fixed_check_shell_filters_rdma_state_by_netdev(self):
+        cmd = _fixed_check_shell("server", {
+            "rdma_device": "mlx5_0",
+            "netdev": "enp4s0f1np1",
+            "rdma_state": "ACTIVE",
+        })
+
+        self.assertIn('-v net="$netdev"', cmd)
+        self.assertIn('if ($i=="netdev" && $(i+1)==net) mapped=1', cmd)
+        self.assertIn("if (mapped)", cmd)
+
+    def test_check_fixed_config_runs_server_and_client_checks(self):
+        calls = []
+
+        def fake_run(cmd, host, timeout=300, ssh_config=None, sudo=None):
+            calls.append((host, cmd, sudo))
+            return RemoteResult(host=host, command=cmd, stdout="fixed check ok\n")
+
+        with patch("rdma_sweep._run_remote_result", side_effect=fake_run):
+            evidence = _check_fixed_config(self._runtime())
+
+        self.assertEqual([c[0] for c in calls], ["server-ssh", "client-ssh"])
+        self.assertTrue(all(c[2] is False for c in calls))
+        self.assertIn("server", evidence)
+        self.assertIn("client", evidence)
+        self.assertIn("fixed.$side.netdev", calls[0][1])
+
+    def test_check_fixed_config_failure_raises(self):
+        def fake_run(cmd, host, timeout=300, ssh_config=None, sudo=None):
+            return RemoteResult(
+                host=host,
+                command=cmd,
+                stderr="fixed.server.mtu expected 4200 got 1500",
+                returncode=1,
+            )
+
+        with patch("rdma_sweep._run_remote_result", side_effect=fake_run):
+            with self.assertRaisesRegex(FixedConfigError, "fixed.server check failed") as ctx:
+                _check_fixed_config(self._runtime())
+        self.assertEqual(ctx.exception.evidence["server"]["returncode"], 1)
 
 
 class TestDeepMergeDoesNotAliasGlobals(unittest.TestCase):
@@ -2502,6 +2645,19 @@ class TestReportGeneration(unittest.TestCase):
             # bar chart would have no symbols; assert one is present.
             self.assertIn("run_iterations", svg)
 
+    def test_qp_scale_example_with_fixed_check_generates_report(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            example = Path(__file__).resolve().parent / "examples" / "qp_scale"
+            shutil.copy(example / "summary.json", out / "summary.json")
+            shutil.copy(example / "run_config.json", out / "run_config.json")
+
+            generate_report(str(out))
+
+            summary = json.loads((out / "summary.json").read_text())
+            self.assertTrue(all("fixed_check" in entry for entry in summary))
+            self.assertTrue((out / "chart.svg").exists())
+
     def test_null_process_in_result_json_does_not_crash(self):
         """#9: generate_report handles result.json with _process: null."""
         with tempfile.TemporaryDirectory() as tmp:
@@ -3407,12 +3563,12 @@ class TestSweepConfig(unittest.TestCase):
         from rdma_sweep import sweep_config
         combos = list(sweep_config({
             "sweep": [{"name": "qp", "values": [1, 4, 16]}],
-            "fixed": {"port": 18515},
+            "perftest": {"fixed": {"port": 18515}},
         }))
         self.assertEqual(len(combos), 3)
         qps = [c["qp"] for c in combos]
         self.assertEqual(qps, [1, 4, 16])
-        # fixed params applied to every combo
+        # perftest.fixed params applied to every combo
         self.assertTrue(all(c["port"] == 18515 for c in combos))
 
     def test_two_params_cartesian_product(self):
@@ -3422,7 +3578,7 @@ class TestSweepConfig(unittest.TestCase):
                 {"name": "msg_size", "values": [64, 1024]},
                 {"name": "qp", "values": [1, 4]},
             ],
-            "fixed": {},
+            "fixed": {"server": {"netdev": "enp4s0f0np0"}},
         }))
         self.assertEqual(len(combos), 4)
         pairs = [(c["msg_size"], c["qp"]) for c in combos]
@@ -3446,16 +3602,28 @@ class TestSweepConfig(unittest.TestCase):
         # spec produces exactly one combo containing only fixed params.
         self.assertEqual(combos, [{}])
 
-    def test_fixed_merged_with_every_combo(self):
+    def test_perftest_fixed_merged_with_every_combo(self):
         from rdma_sweep import sweep_config
         combos = list(sweep_config({
             "sweep": [{"name": "qp", "values": [1]}],
-            "fixed": {"port": 18515, "device": "roce0"},
+            "perftest": {"fixed": {"port": 18515, "device": "roce0", "mtu": 4096}},
         }))
         self.assertEqual(len(combos), 1)
         self.assertEqual(combos[0]["port"], 18515)
         self.assertEqual(combos[0]["device"], "roce0")
+        self.assertEqual(combos[0]["mtu"], 4096)
         self.assertEqual(combos[0]["qp"], 1)
+
+    def test_top_level_fixed_is_os_metadata_not_perftest_args(self):
+        from rdma_sweep import sweep_config
+        combos = list(sweep_config({
+            "sweep": [{"name": "qp", "values": [1]}],
+            "fixed": {
+                "server": {"netdev": "enp4s0f0np0", "mtu": 4200},
+                "client": {"netdev": "enp4s0f1np1", "mtu": 4200},
+            },
+        }))
+        self.assertEqual(combos, [{"qp": 1}])
 
     def test_sweep_entry_missing_name_raises_value_error(self):
         """sweep entry without 'name' raises ValueError (not KeyError)."""
@@ -3471,22 +3639,64 @@ class TestSweepConfig(unittest.TestCase):
             list(sweep_config({"sweep": ["not a dict"]}))
         self.assertIn("name", str(ctx.exception))
 
+    def test_duplicate_sweep_names_raise_value_error(self):
+        from rdma_sweep import sweep_config
+        with self.assertRaisesRegex(ValueError, "duplicate parameter"):
+            list(sweep_config({
+                "sweep": [
+                    {"name": "qp", "values": [1, 2]},
+                    {"name": "qp", "values": [4, 8]},
+                ],
+            }))
+
     def test_sweep_null_is_same_as_empty(self):
         """sweep: null (YAML) yields one empty combo, no crash."""
         from rdma_sweep import sweep_config
         combos = list(sweep_config({"sweep": None}))
         self.assertEqual(combos, [{}])
 
-    def test_fixed_null_skips_fixed_params(self):
-        """fixed: null (YAML) does not crash; yields raw sweep combos."""
+    def test_perftest_fixed_null_skips_fixed_params(self):
+        """perftest.fixed: null (YAML) does not crash; yields raw sweep combos."""
         from rdma_sweep import sweep_config
         combos = list(sweep_config({
             "sweep": [{"name": "qp", "values": [1, 2]}],
-            "fixed": None,
+            "perftest": {"fixed": None},
         }))
         self.assertEqual(len(combos), 2)
         self.assertEqual(combos[0], {"qp": 1})
         self.assertEqual(combos[1], {"qp": 2})
+
+    def test_perftest_fixed_non_mapping_raises_value_error(self):
+        from rdma_sweep import sweep_config
+        with self.assertRaisesRegex(ValueError, "perftest.fixed"):
+            list(sweep_config({
+                "sweep": [{"name": "qp", "values": [1]}],
+                "perftest": {"fixed": ["msg_size", 64]},
+            }))
+
+    def test_perftest_fixed_rejects_rdma_os_keys(self):
+        from rdma_sweep import sweep_config
+        with self.assertRaisesRegex(ValueError, "RDMA/OS"):
+            list(sweep_config({
+                "sweep": [{"name": "qp", "values": [1]}],
+                "perftest": {"fixed": {"netdev": "enp4s0f0np0", "rdma_device": "mlx5_0"}},
+            }))
+
+    def test_perftest_fixed_rejects_fixed_metadata_keys(self):
+        from rdma_sweep import sweep_config
+        with self.assertRaisesRegex(ValueError, "description"):
+            list(sweep_config({
+                "sweep": [{"name": "qp", "values": [1]}],
+                "perftest": {"fixed": {"description": "baseline run"}},
+            }))
+
+    def test_perftest_fixed_cannot_overlap_sweep_keys(self):
+        from rdma_sweep import sweep_config
+        with self.assertRaisesRegex(ValueError, "overlaps swept"):
+            list(sweep_config({
+                "sweep": [{"name": "msg_size", "values": [128]}],
+                "perftest": {"fixed": {"msg_size": 64}},
+            }))
 
     def test_qp_zero_raises_value_error(self):
         """qp=0 raises ValueError with descriptive message."""
@@ -3561,6 +3771,7 @@ class TestRunSweep(unittest.TestCase):
             "use_gpu": False,
             "server": {"host": "server-ssh", "address": "10.0.0.2"},
             "client": {"host": "client-ssh"},
+            "fixed": {"server": {"netdev": "enp4s0f0np0"}},
             "perftest": {"dir": "/opt/perftest", "perf_record": True, "wait_timeout": 30,
                          "default_port": 18515, "env": {}},
             "ssh": {"sudo": True, "allow_local": False, "connect_timeout": 10, "options": []},
@@ -3582,9 +3793,9 @@ class TestRunSweep(unittest.TestCase):
             "test": "ib_write_bw",
             "server": {"host": "server-ssh", "address": "10.0.0.2"},
             "client": {"host": "client-ssh"},
-            "perftest": {"dir": "/opt/perftest"},
             "sweep": [{"name": "qp", "values": [1, 4]}],
-            "fixed": {"msg_size": 64},
+            "fixed": {"server": {"netdev": "enp4s0f0np0"}},
+            "perftest": {"dir": "/opt/perftest", "fixed": {"msg_size": 64}},
             "duration": 1,
         }
 
@@ -3600,6 +3811,7 @@ class TestRunSweep(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             with (
                 patch("rdma_sweep.run_perftest", side_effect=fake_run_perftest),
+                patch("rdma_sweep._check_fixed_config", return_value={"server": {"returncode": 0}}),
                 patch("rdma_sweep._runtime_config", return_value=self._fake_runtime()),
                 patch.object(RealSysMonitor, "grab", return_value=self._clean_grab()),
             ):
@@ -3613,6 +3825,8 @@ class TestRunSweep(unittest.TestCase):
             self.assertEqual(len(summary), 2)
             self.assertEqual(summary[0]["BW_average"], 100)
             self.assertEqual(summary[1]["BW_average"], 200)
+            self.assertEqual(summary[0]["fixed"]["server"]["netdev"], "enp4s0f0np0")
+            self.assertEqual(summary[0]["fixed_check"]["server"]["returncode"], 0)
 
             # summary.csv should exist
             self.assertTrue((Path(tmp) / "summary.csv").exists())
@@ -3620,6 +3834,161 @@ class TestRunSweep(unittest.TestCase):
             # run_config.json should exist
             run_config = json.loads((Path(tmp) / "run_config.json").read_text())
             self.assertEqual(run_config["test"], "ib_write_bw")
+            self.assertEqual(run_config["fixed_check"]["server"]["returncode"], 0)
+
+    def test_fixed_check_failure_stops_before_perftest(self):
+        from rdma_sweep import SysMonitor as RealSysMonitor, run_sweep
+        config = {
+            "test": "ib_write_bw",
+            "server": {"host": "server-ssh", "address": "10.0.0.2"},
+            "client": {"host": "client-ssh"},
+            "perftest": {"dir": "/opt/perftest", "fixed": {"msg_size": 64}},
+            "sweep": [{"name": "qp", "values": [1]}],
+            "fixed": {"server": {"netdev": "enp4s0f0np0", "mtu": 4200}},
+            "duration": 1,
+        }
+        fixed_error = FixedConfigError(
+            "fixed.server check failed",
+            {"server": {"returncode": 1, "stderr": "fixed.server.mtu expected 4200 got 1500"}},
+        )
+        fake_runtime = self._fake_runtime()
+        fake_runtime["fixed"] = config["fixed"]
+
+        with tempfile.TemporaryDirectory() as tmp:
+            with (
+                patch("rdma_sweep._check_fixed_config", side_effect=fixed_error),
+                patch("rdma_sweep.run_perftest") as run_mock,
+                patch("rdma_sweep._runtime_config", return_value=fake_runtime),
+                patch.object(RealSysMonitor, "grab", return_value=self._clean_grab()),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "fixed.server check failed"):
+                    run_sweep(config, output_dir=tmp)
+
+            run_mock.assert_not_called()
+            preflight = json.loads((Path(tmp) / "preflight.json").read_text())
+            self.assertEqual(preflight["fixed"], config["fixed"])
+            self.assertEqual(preflight["fixed_check"]["server"]["returncode"], 1)
+            self.assertIn("fixed.server check failed", preflight["error"])
+            self.assertEqual(sorted(p.name for p in Path(tmp).iterdir()), ["preflight.json"])
+
+    def test_local_combo_validation_runs_before_fixed_check(self):
+        from rdma_sweep import SysMonitor as RealSysMonitor, run_sweep
+        config = {
+            "test": "ib_write_bw",
+            "server": {"host": "server-ssh", "address": "10.0.0.2"},
+            "client": {"host": "client-ssh"},
+            "perftest": {"dir": "/opt/perftest", "fixed": ["msg_size=64"]},
+            "sweep": [{"name": "qp", "values": [1]}],
+            "fixed": {"server": {"netdev": "enp4s0f0np0"}},
+            "duration": 1,
+        }
+
+        with tempfile.TemporaryDirectory() as tmp:
+            with (
+                patch("rdma_sweep._runtime_config", return_value=self._fake_runtime()),
+                patch("rdma_sweep._check_fixed_config") as fixed_check_mock,
+                patch("rdma_sweep.run_perftest") as run_mock,
+                patch.object(RealSysMonitor, "grab") as grab_mock,
+            ):
+                with self.assertRaisesRegex(ValueError, "perftest.fixed"):
+                    run_sweep(config, output_dir=tmp)
+
+        fixed_check_mock.assert_not_called()
+        run_mock.assert_not_called()
+        grab_mock.assert_not_called()
+
+    def test_fixed_check_runs_before_monitors_and_perftest(self):
+        from rdma_sweep import SysMonitor as RealSysMonitor, run_sweep
+        config = {
+            "test": "ib_write_bw",
+            "server": {"host": "server-ssh", "address": "10.0.0.2"},
+            "client": {"host": "client-ssh"},
+            "perftest": {"dir": "/opt/perftest"},
+            "sweep": [{"name": "qp", "values": [1]}],
+            "fixed": {"server": {"netdev": "enp4s0f0np0"}},
+            "duration": 1,
+        }
+        call_order: list[str] = []
+
+        def fake_check(runtime):
+            call_order.append("fixed_check")
+            return {"server": {"returncode": 0}}
+
+        clean_grab = self._clean_grab()
+
+        class FakeMonitor:
+            compute_cpu_diff = staticmethod(RealSysMonitor.compute_cpu_diff)
+            compute_softirq_diff = staticmethod(RealSysMonitor.compute_softirq_diff)
+            extract_mem = staticmethod(RealSysMonitor.extract_mem)
+            compute_mem_delta = staticmethod(RealSysMonitor.compute_mem_delta)
+
+            def __init__(self, host, ssh_config):
+                call_order.append(f"monitor:{host}")
+
+            def grab(self):
+                return clean_grab
+
+        def fake_run_perftest(**kw):
+            call_order.append("perftest")
+            return {"results": {"BW_average": 100}, "_process": {"server_perf": {}, "client_usage": {}}}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            with (
+                patch("rdma_sweep._runtime_config", return_value=self._fake_runtime()),
+                patch("rdma_sweep._check_fixed_config", side_effect=fake_check),
+                patch("rdma_sweep.SysMonitor", FakeMonitor),
+                patch("rdma_sweep.run_perftest", side_effect=fake_run_perftest),
+            ):
+                run_sweep(config, output_dir=tmp)
+
+        self.assertEqual(call_order[0], "fixed_check")
+        self.assertEqual(call_order[1:3], ["monitor:server-ssh", "monitor:client-ssh"])
+        self.assertEqual(call_order[3], "perftest")
+
+    def test_run_config_has_empty_fixed_check_without_fixed_config(self):
+        from rdma_sweep import SysMonitor as RealSysMonitor, run_sweep
+        runtime = self._fake_runtime()
+        runtime["fixed"] = {}
+        config = {
+            "test": "ib_write_bw",
+            "server": {"host": "server-ssh", "address": "10.0.0.2"},
+            "client": {"host": "client-ssh"},
+            "perftest": {"dir": "/opt/perftest"},
+            "sweep": [{"name": "qp", "values": [1]}],
+            "duration": 1,
+        }
+
+        def fake_run_perftest(**kw):
+            return {"results": {"BW_average": 100}, "_process": {"server_perf": {}, "client_usage": {}}}
+
+        clean_grab = self._clean_grab()
+
+        class FakeMonitor:
+            compute_cpu_diff = staticmethod(RealSysMonitor.compute_cpu_diff)
+            compute_softirq_diff = staticmethod(RealSysMonitor.compute_softirq_diff)
+            extract_mem = staticmethod(RealSysMonitor.extract_mem)
+            compute_mem_delta = staticmethod(RealSysMonitor.compute_mem_delta)
+
+            def __init__(self, host, ssh_config):
+                pass
+
+            def grab(self):
+                return clean_grab
+
+        with tempfile.TemporaryDirectory() as tmp:
+            with (
+                patch("rdma_sweep._runtime_config", return_value=runtime),
+                patch("rdma_sweep._check_fixed_config", return_value={}),
+                patch("rdma_sweep.run_perftest", side_effect=fake_run_perftest),
+                patch("rdma_sweep.SysMonitor", FakeMonitor),
+            ):
+                run_sweep(config, output_dir=tmp)
+
+            run_config = json.loads((Path(tmp) / "run_config.json").read_text())
+            summary = json.loads((Path(tmp) / "summary.json").read_text())
+
+        self.assertEqual(run_config["fixed_check"], {})
+        self.assertEqual(summary[0]["fixed_check"], {})
 
     def test_error_propagates_to_summary(self):
         from rdma_sweep import SysMonitor as RealSysMonitor, run_sweep
@@ -3638,6 +4007,7 @@ class TestRunSweep(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             with (
                 patch("rdma_sweep.run_perftest", side_effect=fake_run_perftest),
+                patch("rdma_sweep._check_fixed_config", return_value={}),
                 patch("rdma_sweep._runtime_config", return_value=self._fake_runtime()),
                 patch.object(RealSysMonitor, "grab", return_value=self._clean_grab()),
             ):
@@ -3666,6 +4036,7 @@ class TestRunSweep(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             with (
                 patch("rdma_sweep.run_perftest", side_effect=fake_run_perftest),
+                patch("rdma_sweep._check_fixed_config", return_value={}),
                 patch("rdma_sweep._runtime_config", return_value=self._fake_runtime()),
                 patch.object(RealSysMonitor, "grab", return_value=self._clean_grab()),
             ):
@@ -3725,6 +4096,21 @@ class TestMainCLI(unittest.TestCase):
                 main()
 
             self.assertTrue((out / "chart.svg").exists())
+
+    def test_report_mode_missing_summary_exits_cleanly(self):
+        from rdma_sweep import main
+        with tempfile.TemporaryDirectory() as tmp:
+            stderr = io.StringIO()
+            with (
+                patch("sys.argv", ["rdma_sweep", "--report", tmp]),
+                patch("sys.stderr", stderr),
+                self.assertRaises(SystemExit) as ctx,
+            ):
+                main()
+
+            self.assertEqual(ctx.exception.code, 1)
+            self.assertIn("ERROR: cannot generate report", stderr.getvalue())
+            self.assertNotIn("Traceback", stderr.getvalue())
 
     def test_missing_config_prints_help_and_exits(self):
         from rdma_sweep import main
@@ -3817,6 +4203,33 @@ class TestMainCLI(unittest.TestCase):
             # Verify run_sweep received the parsed config
             args, _ = run_mock.call_args
             self.assertEqual(args[0]["test"], "ib_write_bw")
+
+    def test_dry_run_invalid_top_level_fixed_exits_cleanly(self):
+        from rdma_sweep import main
+        fake_yaml = type("yaml", (), {
+            "safe_load": staticmethod(lambda x: {
+                "sweep": [{"name": "qp", "values": [1]}],
+                "test": "ib_write_bw",
+                "server": {"host": "srv", "address": "10.0.0.1"},
+                "client": {"host": "cli"},
+                "perftest": {"dir": "/usr/bin"},
+                "fixed": {"port": 18515},
+            }),
+        })()
+        with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w", delete=False) as f:
+            f.write("")
+            f.flush()
+            with (
+                patch("sys.argv", ["rdma_sweep", "-c", f.name, "--dry-run"]),
+                patch("rdma_sweep.yaml", fake_yaml),
+                patch("sys.stderr", new_callable=io.StringIO) as stderr,
+            ):
+                with self.assertRaises(SystemExit) as ctx:
+                    main()
+
+            self.assertEqual(ctx.exception.code, 1)
+            self.assertIn("ERROR: top-level fixed is reserved", stderr.getvalue())
+            self.assertNotIn("Traceback", stderr.getvalue())
 
     def test_config_file_not_found_exits(self):
         """Non-existent config file raises FileNotFoundError → clean error + exit."""
@@ -4835,6 +5248,8 @@ class TestRunOneCombo(unittest.TestCase):
             "use_gpu": False,
             "server": {"host": "srv", "address": "10.0.0.2"},
             "client": {"host": "cli"},
+            "fixed": {"server": {"netdev": "enp4s0f0np0", "mtu": 4200}},
+            "fixed_check": {"server": {"returncode": 0, "stdout": "fixed.server check ok\n"}},
             "perftest": {"dir": "/opt/perftest", "perf_record": True, "wait_timeout": 30,
                          "default_port": 18515, "env": {}},
             "ssh": {"sudo": True, "allow_local": False, "connect_timeout": 10, "options": []},
@@ -4877,6 +5292,8 @@ class TestRunOneCombo(unittest.TestCase):
             # a clean run (no top-level error, no cleanup/perf-cleanup error) must
             # NOT get a fabricated run_error — the promotion else-branch is gated.
             self.assertNotIn("run_error", data["_meta"])
+            self.assertEqual(data["_meta"]["fixed"]["server"]["mtu"], 4200)
+            self.assertEqual(data["_meta"]["fixed_check"]["server"]["returncode"], 0)
 
     def test_error_perftest_propagates_to_result(self):
         combo = {"msg_size": 64, "qp": 4}

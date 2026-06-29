@@ -42,6 +42,18 @@ PATH_KEYS = (
     "perf_pid_file",
 )
 
+FIXED_TOP_LEVEL_KEYS = frozenset({"server", "client", "notes", "description"})
+FIXED_SIDE_KEYS = frozenset({
+    "rdma_device",
+    "netdev",
+    "mtu",
+    "address",
+    "ip",
+    "operstate",
+    "rdma_state",
+    "sysctl",
+})
+
 
 def parse_bool(value: Any, key: str) -> bool:
     """Parse config booleans strictly enough to catch accidental strings."""
@@ -138,10 +150,51 @@ def endpoint_config(config: dict[str, Any], name: str) -> dict[str, Any]:
     return endpoint
 
 
+def normalize_fixed_config(config: dict[str, Any]) -> dict[str, Any]:
+    """Validate and copy top-level RDMA/OS fixed-config metadata."""
+    raw = config.get("fixed", {})
+    if raw is None:
+        raw = {}
+    if not isinstance(raw, dict):
+        raise ValueError("config key 'fixed' must be a mapping")
+
+    unknown_top = sorted(set(raw) - FIXED_TOP_LEVEL_KEYS)
+    if unknown_top:
+        raise ValueError(
+            "top-level fixed is reserved for RDMA/OS config; "
+            f"unsupported key(s): {', '.join(unknown_top)}. "
+            "Move perftest flags to perftest.fixed.",
+        )
+
+    fixed = copy.deepcopy(raw)
+    for side in ("server", "client"):
+        side_config = fixed.get(side)
+        if side_config is None:
+            fixed.pop(side, None)
+            continue
+        if not isinstance(side_config, dict):
+            raise ValueError(f"fixed.{side} must be a mapping")
+        unknown_side = sorted(set(side_config) - FIXED_SIDE_KEYS)
+        if unknown_side:
+            raise ValueError(
+                f"fixed.{side} has unsupported key(s): {', '.join(unknown_side)}",
+            )
+        if "sysctl" in side_config and not isinstance(side_config["sysctl"], dict):
+            raise ValueError(f"fixed.{side}.sysctl must be a mapping")
+        if "address" in side_config and "ip" in side_config:
+            raise ValueError(f"fixed.{side} must set only one of address or ip")
+        if any(k in side_config for k in ("mtu", "address", "ip", "operstate")) and "netdev" not in side_config:
+            raise ValueError(f"fixed.{side} netdev is required for mtu/address/ip/operstate checks")
+        if "rdma_state" in side_config and "rdma_device" not in side_config:
+            raise ValueError(f"fixed.{side} rdma_device is required for rdma_state checks")
+    return fixed
+
+
 def runtime_config(config: dict[str, Any]) -> dict[str, Any]:
     """Normalize YAML config into explicit server/client/runtime sections."""
     server = endpoint_config(config, "server")
     client = endpoint_config(config, "client")
+    fixed = normalize_fixed_config(config)
 
     server_host = _str_field(server, "host")
     client_host = _str_field(client, "host")
@@ -203,6 +256,7 @@ def runtime_config(config: dict[str, Any]) -> dict[str, Any]:
         "use_gpu": parse_bool(config.get("use_gpu", False), "use_gpu"),
         "server": server,
         "client": client,
+        "fixed": copy.deepcopy(fixed),
         "perftest": perftest,
         "ssh": ssh,
         "report": report,

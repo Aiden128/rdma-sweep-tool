@@ -121,7 +121,39 @@
     "MsgRate": 10.712996,
     "BW_peak": 0.0,
     "n_iterations": 21427000,
-    "MsgSize": 64
+    "MsgSize": 64,
+    "fixed": {
+      "server": {
+        "rdma_device": "mlx5_0",
+        "netdev": "server-rdma-netdev",
+        "mtu": 4200
+      },
+      "client": {
+        "rdma_device": "mlx5_1",
+        "netdev": "client-rdma-netdev",
+        "mtu": 4200
+      }
+    },
+    "fixed_check": {
+      "server": {
+        "host": "rdma-server.example.com",
+        "command": "sanitized read-only fixed.server preflight",
+        "returncode": 0,
+        "stdout": "fixed.server check ok\n",
+        "stderr": "",
+        "exception": "",
+        "timed_out": false
+      },
+      "client": {
+        "host": "rdma-client.example.com",
+        "command": "sanitized read-only fixed.client preflight",
+        "returncode": 0,
+        "stdout": "fixed.client check ok\n",
+        "stderr": "",
+        "exception": "",
+        "timed_out": false
+      }
+    }
   },
   {
     "server": {
@@ -245,7 +277,39 @@
     "MsgRate": 11.58142,
     "BW_peak": 0.0,
     "n_iterations": 23162700,
-    "MsgSize": 64
+    "MsgSize": 64,
+    "fixed": {
+      "server": {
+        "rdma_device": "mlx5_0",
+        "netdev": "server-rdma-netdev",
+        "mtu": 4200
+      },
+      "client": {
+        "rdma_device": "mlx5_1",
+        "netdev": "client-rdma-netdev",
+        "mtu": 4200
+      }
+    },
+    "fixed_check": {
+      "server": {
+        "host": "rdma-server.example.com",
+        "command": "sanitized read-only fixed.server preflight",
+        "returncode": 0,
+        "stdout": "fixed.server check ok\n",
+        "stderr": "",
+        "exception": "",
+        "timed_out": false
+      },
+      "client": {
+        "host": "rdma-client.example.com",
+        "command": "sanitized read-only fixed.client preflight",
+        "returncode": 0,
+        "stdout": "fixed.client check ok\n",
+        "stderr": "",
+        "exception": "",
+        "timed_out": false
+      }
+    }
   },
   {
     "server": {
@@ -369,7 +433,39 @@
     "MsgRate": 11.010352,
     "BW_peak": 0.0,
     "n_iterations": 22020800,
-    "MsgSize": 64
+    "MsgSize": 64,
+    "fixed": {
+      "server": {
+        "rdma_device": "mlx5_0",
+        "netdev": "server-rdma-netdev",
+        "mtu": 4200
+      },
+      "client": {
+        "rdma_device": "mlx5_1",
+        "netdev": "client-rdma-netdev",
+        "mtu": 4200
+      }
+    },
+    "fixed_check": {
+      "server": {
+        "host": "rdma-server.example.com",
+        "command": "sanitized read-only fixed.server preflight",
+        "returncode": 0,
+        "stdout": "fixed.server check ok\n",
+        "stderr": "",
+        "exception": "",
+        "timed_out": false
+      },
+      "client": {
+        "host": "rdma-client.example.com",
+        "command": "sanitized read-only fixed.client preflight",
+        "returncode": 0,
+        "stdout": "fixed.client check ok\n",
+        "stderr": "",
+        "exception": "",
+        "timed_out": false
+      }
+    }
   },
   {
     "server": {
@@ -493,7 +589,39 @@
     "MsgRate": 11.029456,
     "BW_peak": 0.0,
     "n_iterations": 22059900,
-    "MsgSize": 64
+    "MsgSize": 64,
+    "fixed": {
+      "server": {
+        "rdma_device": "mlx5_0",
+        "netdev": "server-rdma-netdev",
+        "mtu": 4200
+      },
+      "client": {
+        "rdma_device": "mlx5_1",
+        "netdev": "client-rdma-netdev",
+        "mtu": 4200
+      }
+    },
+    "fixed_check": {
+      "server": {
+        "host": "rdma-server.example.com",
+        "command": "sanitized read-only fixed.server preflight",
+        "returncode": 0,
+        "stdout": "fixed.server check ok\n",
+        "stderr": "",
+        "exception": "",
+        "timed_out": false
+      },
+      "client": {
+        "host": "rdma-client.example.com",
+        "command": "sanitized read-only fixed.client preflight",
+        "returncode": 0,
+        "stdout": "fixed.client check ok\n",
+        "stderr": "",
+        "exception": "",
+        "timed_out": false
+      }
+    }
   },
   {
     "server": {
@@ -617,6 +745,38 @@
     "MsgRate": 10.613182,
     "BW_peak": 0.0,
     "n_iterations": 21226400,
-    "MsgSize": 64
+    "MsgSize": 64,
+    "fixed": {
+      "server": {
+        "rdma_device": "mlx5_0",
+        "netdev": "server-rdma-netdev",
+        "mtu": 4200
+      },
+      "client": {
+        "rdma_device": "mlx5_1",
+        "netdev": "client-rdma-netdev",
+        "mtu": 4200
+      }
+    },
+    "fixed_check": {
+      "server": {
+        "host": "rdma-server.example.com",
+        "command": "sanitized read-only fixed.server preflight",
+        "returncode": 0,
+        "stdout": "fixed.server check ok\n",
+        "stderr": "",
+        "exception": "",
+        "timed_out": false
+      },
+      "client": {
+        "host": "rdma-client.example.com",
+        "command": "sanitized read-only fixed.client preflight",
+        "returncode": 0,
+        "stdout": "fixed.client check ok\n",
+        "stderr": "",
+        "exception": "",
+        "timed_out": false
+      }
+    }
   }
 ]

@@ -41,6 +41,12 @@ perftest:
   perf_record: false
   wait_timeout: 30
   default_port: 18515
+  fixed:
+    port: 18515
+    msg_size: 64
+    device: roce-device-name
+    gid_index: 5
+    force_link: Ethernet
 
 ssh:
   sudo: true
@@ -48,11 +54,14 @@ ssh:
   options: [-o, BatchMode=yes, -o, StrictHostKeyChecking=accept-new]
 
 fixed:
-  port: 18515
-  msg_size: 64
-  device: roce-device-name
-  gid_index: 5
-  force_link: Ethernet
+  server:
+    rdma_device: mlx5_0
+    netdev: enP2p1s0f1np1
+    mtu: 4200
+  client:
+    rdma_device: mlx5_1
+    netdev: enP2p1s0f1np1
+    mtu: 4200
 
 sweep:
   - name: qp
@@ -65,6 +74,19 @@ loopback addresses and same-host client/server configurations.
 
 `perftest.dir` must point to the directory containing the selected binary, for
 example `/usr/bin` when `ib_write_bw` is installed as `/usr/bin/ib_write_bw`.
+
+`perftest.fixed` contains perftest command-line parameters that are applied to
+every run. Top-level `fixed` is reserved for RDMA/OS configuration that is held
+constant for the run and recorded in `run_config.json`, each `result.json`, and
+`summary.json`; the tool does not mutate OS state from this block.
+
+Before running a sweep, top-level `fixed.server` and `fixed.client` are checked
+over SSH. Supported read-only checks are `rdma_device`, `netdev`, `mtu`,
+`address`/`ip`, `operstate`, `rdma_state`, and `sysctl` key/value mappings. A
+mismatch aborts before any perftest process is started. Successful preflight
+evidence is stored under `fixed_check` in `run_config.json`, each `result.json`,
+and `summary.json`. Failed preflight checks write `preflight.json` in the output
+directory before exiting.
 
 ## Run
 
@@ -157,7 +179,7 @@ come from the run.
 
 ## Sweep Parameters
 
-Common YAML keys map to perftest flags:
+Common YAML keys in `perftest.fixed` and `sweep` map to perftest flags:
 
 | Config key | Flag | Description |
 | --- | --- | --- |
@@ -185,5 +207,7 @@ Common YAML keys map to perftest flags:
 | `check_alive` | `--check-alive` | perftest alive checks |
 | other keys | `--{name}` | passed through with underscores converted to dashes |
 
-`duration`, `server`, `client`, `perftest`, `ssh`, `report`, and `use_gpu` are
-tool configuration keys and are not forwarded as perftest arguments.
+`duration`, `server`, `client`, `fixed`, `perftest`, `ssh`, `report`, and
+`use_gpu` are tool configuration keys and are not forwarded as perftest
+arguments. Put fixed perftest flags under `perftest.fixed`; put RDMA/OS state
+that should be checked and recorded under top-level `fixed`.

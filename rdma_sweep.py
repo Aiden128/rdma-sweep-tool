@@ -9,6 +9,7 @@ Operations:
 from __future__ import annotations
 
 import argparse
+import copy
 import csv
 import html
 import itertools
@@ -31,8 +32,11 @@ except ImportError:
     yaml = None  # type: ignore[assignment]
 
 from rdma_config import (
+    FIXED_TOP_LEVEL_KEYS,
+    FIXED_SIDE_KEYS,
     _ensure_int,
     _str_field,
+    normalize_fixed_config,
     parse_bool,
     resolve_perftest_paths,
     runtime_config as _runtime_config,
@@ -1475,23 +1479,38 @@ def _validate_qp_positive(combo: dict[str, Any]) -> None:
         )
 
 
+PERFTEST_FIXED_OS_KEYS: frozenset[str] = (FIXED_SIDE_KEYS - {"mtu"}) | FIXED_TOP_LEVEL_KEYS
+
+
+def _validate_perftest_fixed_keys(fixed: dict[str, Any]) -> None:
+    """Reject RDMA/OS fixed-state keys accidentally placed under perftest.fixed."""
+    os_keys = sorted(set(fixed) & PERFTEST_FIXED_OS_KEYS)
+    if os_keys:
+        raise ValueError(
+            "perftest.fixed contains RDMA/OS config key(s): "
+            f"{', '.join(os_keys)}. "
+            "Put RDMA/OS state under top-level fixed.server/fixed.client.",
+        )
+
+
 def sweep_config(config: dict[str, Any]) -> Iterator[dict[str, Any]]:
     """Yield every parameter combination from the config's sweep spec.
 
-    This function consumes only two TOP-LEVEL config keys: ``sweep`` (the list
-    of swept parameters) and ``fixed`` (parameters applied to every combo).
-    The rest of the config (``test``, ``duration``, ``use_gpu``,
-    ``server_host``/``server_address``/``client_host``, ``perftest``, ``ssh``,
-    ``report``, ...) is read separately by ``runtime_config`` and is NOT nested
-    under ``sweep``.
+    ``sweep`` describes perftest parameters that vary. ``perftest.fixed``
+    describes perftest parameters applied to every combo. Top-level ``fixed`` is
+    reserved for RDMA/OS configuration metadata and is not forwarded to perftest.
 
     Relevant structure::
 
+        perftest:
+          fixed:
+            port: 18515                    # applied to every perftest combo
+            msg_size: 64
         fixed:
-          port: 18515                    # applied to every combination
+          server:
+            netdev: enp4s0f0np0            # recorded OS/RDMA config metadata
+            mtu: 4200
         sweep:
-          - name: msg_size
-            values: [1, 4, 64, 1024]     # explicit byte sizes
           - name: qp
             from: 1
             to: 512
@@ -1501,7 +1520,12 @@ def sweep_config(config: dict[str, Any]) -> Iterator[dict[str, Any]]:
           #     values: [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
     """
     sweep_params = _config_val(config, "sweep", [])
-    fixed = _config_val(config, "fixed", {})
+    normalize_fixed_config(config)
+    perftest_config = _get_dict(config, "perftest")
+    fixed = _config_val(perftest_config, "fixed", {})
+    if not isinstance(fixed, dict):
+        raise ValueError("perftest.fixed must be a mapping")
+    _validate_perftest_fixed_keys(fixed)
 
     expanded: list[tuple[str, list[Any]]] = []
     for sp in sweep_params:
@@ -1511,6 +1535,20 @@ def sweep_config(config: dict[str, Any]) -> Iterator[dict[str, Any]]:
         expanded.append((name, _expand(sp)))
 
     keys = [e[0] for e in expanded]
+    duplicate_keys = sorted({key for key in keys if keys.count(key) > 1})
+    if duplicate_keys:
+        raise ValueError(
+            "sweep contains duplicate parameter name(s): "
+            f"{', '.join(duplicate_keys)}. "
+            "Each swept parameter must appear only once.",
+        )
+    overlapping_fixed = sorted(set(fixed) & set(keys))
+    if overlapping_fixed:
+        raise ValueError(
+            "perftest.fixed overlaps swept parameter(s): "
+            f"{', '.join(overlapping_fixed)}. "
+            "Put a parameter in either perftest.fixed or sweep, not both.",
+        )
     for values in itertools.product(*[e[1] for e in expanded]):
         combo: dict[str, Any] = {}
         combo.update(fixed)
@@ -1549,6 +1587,7 @@ BUILD_ARGS_SKIP_KEYS: frozenset[str] = frozenset({
     "client",
     "client_host",
     "duration",
+    "fixed",
     "host",
     "output_dir",
     "perftest",
@@ -1597,6 +1636,139 @@ def _build_args(combo: dict[str, Any]) -> list[str]:
     return args
 
 
+def _fixed_check_shell(side: str, config: dict[str, Any]) -> str:
+    """Build a read-only remote shell preflight for one fixed-config side."""
+    lines = [
+        "set -u",
+        "errors=0",
+        "fail() { echo \"$1\" >&2; errors=$((errors + 1)); }",
+        f"side={shlex.quote(side)}",
+    ]
+
+    netdev = config.get("netdev")
+    rdma_device = config.get("rdma_device")
+    if netdev is not None:
+        lines += [
+            f"netdev={shlex.quote(str(netdev))}",
+            'if [ ! -d "/sys/class/net/$netdev" ]; then '
+            'fail "fixed.$side.netdev=$netdev not found"; fi',
+        ]
+    if rdma_device is not None:
+        lines += [
+            f"rdma_device={shlex.quote(str(rdma_device))}",
+            'if ! command -v rdma >/dev/null 2>&1; then '
+            'fail "rdma command not found for fixed.$side.rdma_device check"; '
+            'elif ! rdma link 2>/dev/null | awk -v dev="$rdma_device" '
+            '\'$2 ~ "^" dev "/" {found=1} END{exit(found ? 0 : 1)}\'; then '
+            'fail "fixed.$side.rdma_device=$rdma_device not found in rdma link"; fi',
+        ]
+    if netdev is not None and rdma_device is not None:
+        lines.append(
+            'if command -v rdma >/dev/null 2>&1 && ! rdma link 2>/dev/null | '
+            'awk -v dev="$rdma_device" -v net="$netdev" '
+            '\'$2 ~ "^" dev "/" {for (i=1; i<NF; i++) if ($i=="netdev" && $(i+1)==net) found=1} '
+            'END{exit(found ? 0 : 1)}\'; then '
+            'fail "fixed.$side.rdma_device=$rdma_device is not mapped to fixed.$side.netdev=$netdev"; fi'
+        )
+    if "rdma_state" in config:
+        lines.append(f"rdma_state={shlex.quote(str(config['rdma_state']))}")
+        if netdev is not None:
+            lines.append(
+                'actual=$(rdma link 2>/dev/null | awk -v dev="$rdma_device" -v net="$netdev" '
+                '\'$2 ~ "^" dev "/" {mapped=0; for (i=1; i<NF; i++) if ($i=="netdev" && $(i+1)==net) mapped=1; '
+                'if (mapped) for (i=1; i<NF; i++) if ($i=="state") {print $(i+1); exit}}\')'
+            )
+        else:
+            lines.append(
+                'actual=$(rdma link 2>/dev/null | awk -v dev="$rdma_device" '
+                '\'$2 ~ "^" dev "/" {for (i=1; i<NF; i++) if ($i=="state") {print $(i+1); exit}}\')'
+            )
+        lines += [
+            'if [ "$actual" != "$rdma_state" ]; then '
+            'fail "fixed.$side.rdma_state expected $rdma_state got ${actual:-<missing>}"; fi',
+        ]
+    if "mtu" in config:
+        lines += [
+            f"mtu={shlex.quote(str(config['mtu']))}",
+            'actual=$(cat "/sys/class/net/$netdev/mtu" 2>/dev/null || true)',
+            'if [ "$actual" != "$mtu" ]; then '
+            'fail "fixed.$side.mtu expected $mtu got ${actual:-<missing>}"; fi',
+        ]
+    address = config.get("address", config.get("ip"))
+    if address is not None:
+        lines += [
+            f"address={shlex.quote(str(address))}",
+            'if ! command -v ip >/dev/null 2>&1; then '
+            'fail "ip command not found for fixed.$side.address check"; '
+            'elif ! ip -o addr show dev "$netdev" 2>/dev/null | '
+            'awk \'{split($4, a, "/"); print a[1]}\' | grep -Fx -- "$address" >/dev/null; then '
+            'fail "fixed.$side.address=$address not configured on fixed.$side.netdev=$netdev"; fi',
+        ]
+    if "operstate" in config:
+        lines += [
+            f"operstate={shlex.quote(str(config['operstate']))}",
+            'actual=$(cat "/sys/class/net/$netdev/operstate" 2>/dev/null || true)',
+            'if [ "$actual" != "$operstate" ]; then '
+            'fail "fixed.$side.operstate expected $operstate got ${actual:-<missing>}"; fi',
+        ]
+
+    sysctl_config = config.get("sysctl") or {}
+    for key, expected in sorted(sysctl_config.items()):
+        key_q = shlex.quote(str(key))
+        expected_q = shlex.quote(str(expected))
+        lines += [
+            f"sysctl_key={key_q}",
+            f"sysctl_expected={expected_q}",
+            'actual=$(sysctl -n "$sysctl_key" 2>/dev/null || true)',
+            'if [ "$actual" != "$sysctl_expected" ]; then '
+            'fail "fixed.$side.sysctl.$sysctl_key expected $sysctl_expected got ${actual:-<missing>}"; fi',
+        ]
+
+    lines += [
+        'if [ "$errors" -ne 0 ]; then exit 1; fi',
+        'echo "fixed.$side check ok"',
+    ]
+    return "\n".join(lines)
+
+
+class FixedConfigError(RuntimeError):
+    """Raised when a fixed RDMA/OS preflight fails, with captured evidence."""
+
+    def __init__(self, message: str, evidence: dict[str, Any]) -> None:
+        super().__init__(message)
+        self.evidence = evidence
+
+
+def _check_fixed_config(runtime: dict[str, Any]) -> dict[str, Any]:
+    """Validate fixed RDMA/OS config on server/client without mutating hosts."""
+    fixed = _get_dict(runtime, "fixed")
+    if not fixed:
+        return {}
+
+    ssh_config = _get_dict(runtime, "ssh")
+    evidence: dict[str, Any] = {}
+    for side in ("server", "client"):
+        side_config = _get_dict(fixed, side)
+        if not side_config:
+            continue
+        endpoint = _get_dict(runtime, side)
+        host = _str_field(endpoint, "host")
+        result = _run_remote_result(
+            _fixed_check_shell(side, side_config),
+            host,
+            timeout=15,
+            ssh_config=ssh_config,
+            sudo=False,
+        )
+        evidence[side] = result.to_dict()
+        if not result.ok:
+            raise FixedConfigError(
+                f"fixed.{side} check failed on {host}: {result.error_summary()}",
+                copy.deepcopy(evidence),
+            )
+    return evidence
+
+
 def _build_run_metadata(
     test: str,
     server: dict[str, Any],
@@ -1612,6 +1784,8 @@ def _build_run_metadata(
     server_after: dict[str, Any],
     client_before: dict[str, Any],
     client_after: dict[str, Any],
+    fixed: dict[str, Any] | None = None,
+    fixed_check: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build the ``_meta`` dict attached to every per-combo result."""
     return {
@@ -1619,6 +1793,8 @@ def _build_run_metadata(
         "test": test,
         "server": server,
         "client": client,
+        "fixed": fixed or {},
+        "fixed_check": fixed_check or {},
         "duration": duration,
         "parameters": combo,
         "elapsed_sec": round(elapsed, 2),
@@ -1802,6 +1978,8 @@ def _run_one_combo(
         server_after,
         client_before,
         client_after,
+        runtime.get("fixed", {}),
+        runtime.get("fixed_check", {}),
     )
     return _save_combo_result(result, meta, out_path, combo_idx, elapsed, result_files)
 
@@ -1816,7 +1994,23 @@ def run_sweep(config: dict[str, Any], output_dir: str = "sweep_results") -> list
     client_host = runtime["client"]["host"]
     ssh_config = runtime["ssh"]
 
+    # Eagerly materialise combos so local config errors raise before any remote
+    # preflight or perftest process is dispatched.
+    _combos = list(sweep_config(config))
+
     out_path = Path(output_dir)
+    try:
+        fixed_check = _check_fixed_config(runtime)
+    except FixedConfigError as exc:
+        out_path.mkdir(parents=True, exist_ok=True)
+        _write_json(out_path / "preflight.json", {
+            "error": str(exc),
+            "fixed": runtime.get("fixed", {}),
+            "fixed_check": exc.evidence,
+        })
+        raise
+    runtime["fixed_check"] = fixed_check
+
     out_path.mkdir(parents=True, exist_ok=True)
     _write_json(out_path / "run_config.json", runtime)
 
@@ -1825,10 +2019,6 @@ def run_sweep(config: dict[str, Any], output_dir: str = "sweep_results") -> list
 
     result_files: list[Path] = []
 
-    # Eagerly materialise combos so that a validation failure (e.g. non-positive
-    # QP) raises before any perftest run is dispatched, not mid-sweep with
-    # orphaned runs already launched.
-    _combos = list(sweep_config(config))
     try:
         for combo_idx, combo in enumerate(_combos, 1):
             _run_one_combo(combo_idx, combo, runtime, server_monitor, client_monitor, out_path, result_files)
@@ -1884,6 +2074,8 @@ def _summary_entry(meta: dict[str, Any], results: dict[str, Any] | None) -> dict
     entry: dict[str, Any] = {
         "server": _get_dict(meta, "server"),
         "client": _get_dict(meta, "client"),
+        "fixed": _get_dict(meta, "fixed"),
+        "fixed_check": _get_dict(meta, "fixed_check"),
         "params": _get_dict(meta, "parameters"),
         "error": meta.get("run_error"),
         "elapsed_sec": meta.get("elapsed_sec"),
@@ -3030,7 +3222,10 @@ def main() -> None:
 
     report_dir = args.report if isinstance(args.report, str) else args.output_dir
     if args.report:
-        generate_report(report_dir)
+        try:
+            generate_report(report_dir)
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            _exit_error(f"ERROR: cannot generate report from {report_dir}: {exc}")
         return
 
     if yaml is None:
@@ -3044,12 +3239,18 @@ def main() -> None:
     _validate_sweep_config(config)
 
     if args.dry_run:
-        _dry_run_print(config)
+        try:
+            _dry_run_print(config)
+        except ValueError as exc:
+            _exit_error(f"ERROR: {exc}")
         return
 
     # Pre-populate local host set for self-detection before first SSH use.
     init_local_hosts()
-    run_sweep(config, output_dir=args.output_dir)
+    try:
+        run_sweep(config, output_dir=args.output_dir)
+    except (RuntimeError, ValueError) as exc:
+        _exit_error(f"ERROR: {exc}")
 
     # Exit non-zero when any individual run produced an error.
     errors = _count_summary_errors(args.output_dir)
