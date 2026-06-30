@@ -10,7 +10,7 @@
     "params": {
       "port": 18515,
       "msg_size": 64,
-      "device": "roce-device-name",
+      "device": "mlx5_0",
       "gid_index": 5,
       "force_link": "Ethernet",
       "qp": 1
@@ -129,7 +129,7 @@
         "mtu": 4200
       },
       "client": {
-        "rdma_device": "mlx5_1",
+        "rdma_device": "mlx5_0",
         "netdev": "client-rdma-netdev",
         "mtu": 4200
       }
@@ -166,7 +166,7 @@
     "params": {
       "port": 18515,
       "msg_size": 64,
-      "device": "roce-device-name",
+      "device": "mlx5_0",
       "gid_index": 5,
       "force_link": "Ethernet",
       "qp": 2
@@ -285,7 +285,7 @@
         "mtu": 4200
       },
       "client": {
-        "rdma_device": "mlx5_1",
+        "rdma_device": "mlx5_0",
         "netdev": "client-rdma-netdev",
         "mtu": 4200
       }
@@ -322,7 +322,7 @@
     "params": {
       "port": 18515,
       "msg_size": 64,
-      "device": "roce-device-name",
+      "device": "mlx5_0",
       "gid_index": 5,
       "force_link": "Ethernet",
       "qp": 4
@@ -441,7 +441,7 @@
         "mtu": 4200
       },
       "client": {
-        "rdma_device": "mlx5_1",
+        "rdma_device": "mlx5_0",
         "netdev": "client-rdma-netdev",
         "mtu": 4200
       }
@@ -478,7 +478,7 @@
     "params": {
       "port": 18515,
       "msg_size": 64,
-      "device": "roce-device-name",
+      "device": "mlx5_0",
       "gid_index": 5,
       "force_link": "Ethernet",
       "qp": 8
@@ -597,7 +597,7 @@
         "mtu": 4200
       },
       "client": {
-        "rdma_device": "mlx5_1",
+        "rdma_device": "mlx5_0",
         "netdev": "client-rdma-netdev",
         "mtu": 4200
       }
@@ -634,7 +634,7 @@
     "params": {
       "port": 18515,
       "msg_size": 64,
-      "device": "roce-device-name",
+      "device": "mlx5_0",
       "gid_index": 5,
       "force_link": "Ethernet",
       "qp": 16
@@ -753,7 +753,7 @@
         "mtu": 4200
       },
       "client": {
-        "rdma_device": "mlx5_1",
+        "rdma_device": "mlx5_0",
         "netdev": "client-rdma-netdev",
         "mtu": 4200
       }

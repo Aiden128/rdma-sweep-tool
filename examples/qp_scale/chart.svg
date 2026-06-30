@@ -27,17 +27,17 @@
 <text x='554.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>16</text>
 <polyline points='74.0,120.99741112227143 194.0,112.0 314.0,117.91622221907848 434.0,117.71929774923254 554.0,122.03126458896261' fill='none' stroke='#2563eb' stroke-width='2.5' stroke-linejoin='round'/>
 <circle cx='74.0' cy='120.99741112227143' r='4' fill='#2563eb'/>
-<text x='74.0' y='110.99741112227143' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>654</text>
 <circle cx='194.0' cy='112.0' r='4' fill='#2563eb'/>
-<text x='194.0' y='102.0' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>707</text>
 <circle cx='314.0' cy='117.91622221907848' r='4' fill='#2563eb'/>
-<text x='314.0' y='107.91622221907848' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>672</text>
 <circle cx='434.0' cy='117.71929774923254' r='4' fill='#2563eb'/>
-<text x='434.0' y='107.71929774923254' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>673</text>
 <circle cx='554.0' cy='122.03126458896261' r='4' fill='#2563eb'/>
+<text x='74.0' y='110.99741112227143' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>654</text>
+<text x='194.0' y='102.0' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>707</text>
+<text x='314.0' y='107.91622221907848' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>672</text>
+<text x='434.0' y='107.71929774923254' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>673</text>
 <text x='554.0' y='112.03126458896261' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>648</text>
 <rect x='598.0' y='56' width='566.0' height='220' rx='6' fill='#fff' stroke='#e2e8f0' stroke-width='1'/>
-<text x='881.0' y='72' font-family='system-ui,sans-serif' font-size='14' font-weight='bold' fill='#1e293b' text-anchor='middle'>Message Rate (Mmsg/s)</text>
+<text x='881.0' y='72' font-family='system-ui,sans-serif' font-size='14' font-weight='bold' fill='#1e293b' text-anchor='middle'>Message Rate (Kmsg/s)</text>
 <text x='631.0' y='166.0' font-family='system-ui,sans-serif' font-size='11' fill='#64748b' text-anchor='middle' transform='rotate(-90,631.0,166.0)'>Kmsg/s</text>
 <line x1='656.0' y1='100.0' x2='1136.0' y2='100.0' stroke='#e2e8f0' stroke-width='1'/>
 <text x='650.0' y='104.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>12740</text>
@@ -62,14 +62,14 @@
 <text x='1136.0' y='250' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>16</text>
 <polyline points='656.0,120.99810904016952 776.0,112.00000000000001 896.0,117.91707752589927 1016.0,117.71913288698623 1136.0,122.03232418822564' fill='none' stroke='#16a34a' stroke-width='2.5' stroke-linejoin='round'/>
 <circle cx='656.0' cy='120.99810904016952' r='4' fill='#16a34a'/>
-<text x='656.0' y='110.99810904016952' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>10713</text>
 <circle cx='776.0' cy='112.00000000000001' r='4' fill='#16a34a'/>
-<text x='776.0' y='102.00000000000001' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>11581</text>
 <circle cx='896.0' cy='117.91707752589927' r='4' fill='#16a34a'/>
-<text x='896.0' y='107.91707752589927' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>11010</text>
 <circle cx='1016.0' cy='117.71913288698623' r='4' fill='#16a34a'/>
-<text x='1016.0' y='107.71913288698623' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>11029</text>
 <circle cx='1136.0' cy='122.03232418822564' r='4' fill='#16a34a'/>
+<text x='656.0' y='110.99810904016952' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>10713</text>
+<text x='776.0' y='102.00000000000001' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>11581</text>
+<text x='896.0' y='107.91707752589927' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>11010</text>
+<text x='1016.0' y='107.71913288698623' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>11029</text>
 <text x='1136.0' y='112.03232418822564' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b' text-anchor='middle'>10613</text>
 <rect x='16.0' y='292' width='566.0' height='220' rx='6' fill='#fff' stroke='#e2e8f0' stroke-width='1'/>
 <text x='299.0' y='308' font-family='system-ui,sans-serif' font-size='14' font-weight='bold' fill='#1e293b' text-anchor='middle'>Average CPU Utilization</text>
@@ -117,13 +117,13 @@
 <line x1='656.0' y1='336.0' x2='1066.0' y2='336.0' stroke='#e2e8f0' stroke-width='1'/>
 <text x='650.0' y='340.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>50.3</text>
 <line x1='656.0' y1='369.0' x2='1066.0' y2='369.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='650.0' y='373.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>37.7</text>
+<text x='650.0' y='373.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>34.7</text>
 <line x1='656.0' y1='402.0' x2='1066.0' y2='402.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='650.0' y='406.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>25.1</text>
+<text x='650.0' y='406.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>19.1</text>
 <line x1='656.0' y1='435.0' x2='1066.0' y2='435.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='650.0' y='439.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>12.6</text>
+<text x='650.0' y='439.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>3.6</text>
 <line x1='656.0' y1='468.0' x2='1066.0' y2='468.0' stroke='#e2e8f0' stroke-width='1'/>
-<text x='650.0' y='472.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0.0</text>
+<text x='650.0' y='472.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>-12.0</text>
 <line x1='656.0' y1='468' x2='1066.0' y2='468' stroke='#94a3b8' stroke-width='1'/>
 <line x1='656.0' y1='468' x2='656.0' y2='472' stroke='#94a3b8' stroke-width='1'/>
 <text x='656.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>1</text>
@@ -135,24 +135,23 @@
 <text x='963.5' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>8</text>
 <line x1='1066.0' y1='468' x2='1066.0' y2='472' stroke='#94a3b8' stroke-width='1'/>
 <text x='1066.0' y='486' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>16</text>
-<polyline points='656.0,353.2173913043478 758.5,441.733956705575 861.0,452.7656968931736 963.5,409.95204582227586 1066.0,496.6299861889532' fill='none' stroke='#ca8a04' stroke-width='2.5' stroke-linejoin='round'/>
-<circle cx='656.0' cy='353.2173913043478' r='3.5' fill='#ca8a04'/>
-<circle cx='758.5' cy='441.733956705575' r='3.5' fill='#ca8a04'/>
-<circle cx='861.0' cy='452.7656968931736' r='3.5' fill='#ca8a04'/>
-<circle cx='963.5' cy='409.95204582227586' r='3.5' fill='#ca8a04'/>
-<circle cx='1066.0' cy='496.6299861889532' r='3.5' fill='#ca8a04'/>
+<polyline points='656.0,349.8986426676098 758.5,421.35314416140454 861.0,430.25845462098766 963.5,395.6973746634291 1066.0,465.6676563992355' fill='none' stroke='#ca8a04' stroke-width='2.5' stroke-linejoin='round'/>
+<circle cx='656.0' cy='349.8986426676098' r='3.5' fill='#ca8a04'/>
+<circle cx='758.5' cy='421.35314416140454' r='3.5' fill='#ca8a04'/>
+<circle cx='861.0' cy='430.25845462098766' r='3.5' fill='#ca8a04'/>
+<circle cx='963.5' cy='395.6973746634291' r='3.5' fill='#ca8a04'/>
+<circle cx='1066.0' cy='465.6676563992355' r='3.5' fill='#ca8a04'/>
 <rect x='1080.0' y='340' width='10' height='10' fill='#ca8a04' rx='2'/>
 <text x='1096.0' y='350' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b'>server</text>
-<polyline points='656.0,406.0121393281121 758.5,482.70898274192297 861.0,394.45507877561005 963.5,451.18973329353804 1066.0,499.51925195331' fill='none' stroke='#9333ea' stroke-width='2.5' stroke-linejoin='round'/>
-<circle cx='656.0' cy='406.0121393281121' r='3.5' fill='#9333ea'/>
-<circle cx='758.5' cy='482.70898274192297' r='3.5' fill='#9333ea'/>
-<circle cx='861.0' cy='394.45507877561005' r='3.5' fill='#9333ea'/>
-<circle cx='963.5' cy='451.18973329353804' r='3.5' fill='#9333ea'/>
-<circle cx='1066.0' cy='499.51925195331' r='3.5' fill='#9333ea'/>
+<polyline points='656.0,392.51690721988854 758.5,454.43000436097475 861.0,383.1875348389174 963.5,428.9862668347367 1066.0,468.0' fill='none' stroke='#9333ea' stroke-width='2.5' stroke-linejoin='round'/>
+<circle cx='656.0' cy='392.51690721988854' r='3.5' fill='#9333ea'/>
+<circle cx='758.5' cy='454.43000436097475' r='3.5' fill='#9333ea'/>
+<circle cx='861.0' cy='383.1875348389174' r='3.5' fill='#9333ea'/>
+<circle cx='963.5' cy='428.9862668347367' r='3.5' fill='#9333ea'/>
+<circle cx='1066.0' cy='468.0' r='3.5' fill='#9333ea'/>
 <rect x='1080.0' y='358' width='10' height='10' fill='#9333ea' rx='2'/>
 <text x='1096.0' y='368' font-family='system-ui,sans-serif' font-size='10' fill='#1e293b'>client</text>
 <rect x='16' y='528' width='1148' height='250' rx='6' fill='#fff' stroke='#e2e8f0' stroke-width='1'/>
-<text x='590.0' y='544' font-family='system-ui,sans-serif' font-size='14' font-weight='bold' fill='#1e293b' text-anchor='middle'>Top CPU Consumers (self %)</text>
 <text x='49.0' y='653.0' font-family='system-ui,sans-serif' font-size='11' fill='#64748b' text-anchor='middle' transform='rotate(-90,49.0,653.0)'>Self %</text>
 <line x1='74' y1='572.0' x2='996' y2='572.0' stroke='#e2e8f0' stroke-width='1'/>
 <text x='68' y='576.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>100</text>
@@ -166,10 +165,20 @@
 <text x='68' y='738.0' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='end'>0</text>
 <line x1='74' y1='734' x2='996' y2='734' stroke='#94a3b8' stroke-width='1'/>
 <text x='211.0' y='752' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>1</text>
+<rect x='186.0' y='572' width='50' height='162' fill='#e2e8f0' stroke='#94a3b8' stroke-width='1' stroke-dasharray='4,2'/>
+<text x='211.0' y='653.0' font-family='system-ui,sans-serif' font-size='9' fill='#64748b' text-anchor='middle'>n/a</text>
 <text x='373.0' y='752' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>2</text>
+<rect x='348.0' y='572' width='50' height='162' fill='#e2e8f0' stroke='#94a3b8' stroke-width='1' stroke-dasharray='4,2'/>
+<text x='373.0' y='653.0' font-family='system-ui,sans-serif' font-size='9' fill='#64748b' text-anchor='middle'>n/a</text>
 <text x='535.0' y='752' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>4</text>
+<rect x='510.0' y='572' width='50' height='162' fill='#e2e8f0' stroke='#94a3b8' stroke-width='1' stroke-dasharray='4,2'/>
+<text x='535.0' y='653.0' font-family='system-ui,sans-serif' font-size='9' fill='#64748b' text-anchor='middle'>n/a</text>
 <text x='697.0' y='752' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>8</text>
+<rect x='672.0' y='572' width='50' height='162' fill='#e2e8f0' stroke='#94a3b8' stroke-width='1' stroke-dasharray='4,2'/>
+<text x='697.0' y='653.0' font-family='system-ui,sans-serif' font-size='9' fill='#64748b' text-anchor='middle'>n/a</text>
 <text x='859.0' y='752' font-family='system-ui,sans-serif' font-size='10' fill='#64748b' text-anchor='middle'>16</text>
+<rect x='834.0' y='572' width='50' height='162' fill='#e2e8f0' stroke='#94a3b8' stroke-width='1' stroke-dasharray='4,2'/>
+<text x='859.0' y='653.0' font-family='system-ui,sans-serif' font-size='9' fill='#64748b' text-anchor='middle'>n/a</text>
 <rect x='16' y='794' width='1148' height='174' rx='6' fill='#fff' stroke='#e2e8f0' stroke-width='1'/>
 <text x='590.0' y='810' font-family='system-ui,sans-serif' font-size='14' font-weight='bold' fill='#1e293b' text-anchor='middle'>Server Per-Core CPU Utilization (%)</text>
 <rect x='24.0' y='826' width='53.904761904761905' height='24' fill='#f1f5f9'/>

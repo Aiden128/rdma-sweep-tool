@@ -26,7 +26,7 @@
     "fixed": {
       "port": 18515,
       "msg_size": 64,
-      "device": "roce-device-name",
+      "device": "mlx5_0",
       "gid_index": 5,
       "force_link": "Ethernet"
     }
@@ -38,7 +38,7 @@
       "mtu": 4200
     },
     "client": {
-      "rdma_device": "mlx5_1",
+      "rdma_device": "mlx5_0",
       "netdev": "client-rdma-netdev",
       "mtu": 4200
     }

@@ -60,12 +60,12 @@ ssh:
 fixed:
   server:
     rdma_device: mlx5_0
-    netdev: enP2p1s0f1np1
+    netdev: server-rdma-netdev
     mtu: 4200
     rdma_state: ACTIVE
   client:
-    rdma_device: mlx5_1
-    netdev: enP2p1s0f1np1
+    rdma_device: mlx5_0
+    netdev: client-rdma-netdev
     mtu: 4200
     rdma_state: ACTIVE
 
@@ -85,6 +85,10 @@ example `/usr/bin` when `ib_write_bw` is installed as `/usr/bin/ib_write_bw`.
 every run. Put values there when they should become perftest flags, for example
 `port`, `msg_size`, `device`, `gid_index`, or `force_link`. A parameter may be
 defined in either `perftest.fixed` or `sweep`, not both.
+
+`perftest.fixed.device` is passed to both server and client perftest commands.
+Use it only when both hosts expose the same RDMA device name, or omit it and let
+perftest use its default device selection.
 
 Top-level `fixed` is reserved for RDMA/OS configuration that is held constant
 for the run and recorded in `run_config.json`, each `result.json`, and
@@ -211,33 +215,24 @@ come from the run.
 
 ## Sweep Parameters
 
-Common YAML keys in `perftest.fixed` and `sweep` map to perftest flags:
+The sample config above uses these perftest parameter keys. The same key can be
+placed under `perftest.fixed` when it is constant, or under `sweep` when it is
+varied, but not both.
 
 | Config key | Flag | Description |
 | --- | --- | --- |
-| `msg_size` | `-s` | message size |
-| `qp` | `-q` | queue pairs |
-| `tx_depth` | `-t` | TX depth |
-| `rx_depth` | `-r` | RX depth |
-| `post_list` | `-l` | post list |
-| `cq_mod` | `-Q` | completion queue moderation |
-| `iters` | `-n` | iterations |
 | `port` | `-p` | perftest TCP control port |
-| `ib_port` | `-i` | IB device port |
-| `inline` | `-I` | inline size |
-| `sl` | `-S` | service level |
-| `mtu` | `-m` | MTU |
-| `tos` | `-T` | type of service |
-| `recv_post_list` | `--recv-post-list` | receive post list |
-| `cpu_util` | `--cpu_util` | ask perftest to report CPU utilization |
+| `msg_size` | `-s` | message size |
 | `device` | `-d` | RDMA device |
 | `gid_index` | `-x` | GID index |
 | `force_link` | `--force-link` | force link type, for example `Ethernet` |
-| `rdma_cm` | `-R` | use RDMA CM QPs |
-| `comm_rdma_cm` | `-z` | exchange data through rdma_cm |
-| `bind_source_ip` | `--bind_source_ip` | bind connection setup source IP |
-| `check_alive` | `--check-alive` | perftest alive checks |
+| `qp` | `-q` | queue pairs |
 | other keys | `--{name}` | passed through with underscores converted to dashes |
+
+Other common perftest keys are supported too: `tx_depth`, `rx_depth`,
+`post_list`, `cq_mod`, `iters`, `ib_port`, `inline`, `sl`, `mtu`, `tos`,
+`recv_post_list`, `cpu_util`, `rdma_cm`, `comm_rdma_cm`, `bind_source_ip`, and
+`check_alive`.
 
 `duration`, `server`, `client`, `fixed`, `perftest`, `ssh`, `report`, and
 `use_gpu` are tool configuration keys and are not forwarded as perftest
