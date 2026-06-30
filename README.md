@@ -76,9 +76,14 @@ loopback addresses and same-host client/server configurations.
 example `/usr/bin` when `ib_write_bw` is installed as `/usr/bin/ib_write_bw`.
 
 `perftest.fixed` contains perftest command-line parameters that are applied to
-every run. Top-level `fixed` is reserved for RDMA/OS configuration that is held
-constant for the run and recorded in `run_config.json`, each `result.json`, and
-`summary.json`; the tool does not mutate OS state from this block.
+every run. Put values there when they should become perftest flags, for example
+`port`, `msg_size`, `device`, `gid_index`, or `force_link`. A parameter may be
+defined in either `perftest.fixed` or `sweep`, not both.
+
+Top-level `fixed` is reserved for RDMA/OS configuration that is held constant
+for the run and recorded in `run_config.json`, each `result.json`, and
+`summary.json`; the tool does not mutate OS state from this block. Do not put
+perftest flags under top-level `fixed`.
 
 Before running a sweep, top-level `fixed.server` and `fixed.client` are checked
 over SSH. Supported read-only checks are `rdma_device`, `netdev`, `mtu`,
@@ -88,7 +93,20 @@ evidence is stored under `fixed_check` in `run_config.json`, each `result.json`,
 and `summary.json`. Failed preflight checks write `preflight.json` in the output
 directory before exiting.
 
+`fixed.*.mtu` checks the operating-system MTU on `fixed.*.netdev`.
+`perftest.fixed.mtu` is different: it maps to perftest `-m`.
+`mtu`, `address`/`ip`, and `operstate` checks require `netdev`; `rdma_state`
+requires `rdma_device`.
+
 ## Run
+
+Preview the perftest combinations without touching either host:
+
+```bash
+python3 rdma_sweep.py \
+  --config examples/qp_scale/config.yaml \
+  --dry-run
+```
 
 ```bash
 python3 rdma_sweep.py \
@@ -135,7 +153,11 @@ link roceP2p1s0f1/1 state ACTIVE physical_state LINK_UP netdev enP2p1s0f1np1
 ```
 
 In that case, assign the data-plane IP to `enP2p1s0f1np1` and use
-`device: roceP2p1s0f1` in the sweep config.
+`device: roceP2p1s0f1` under `perftest.fixed` when the device is constant.
+Use a `sweep` entry named `device` only when you intentionally want to sweep
+across devices. Record the matching `rdma_device`, `netdev`, and expected MTU
+under top-level `fixed.server` / `fixed.client` when you want the tool to check
+that OS/RDMA state before it starts perftest.
 
 Find the RoCEv2 GID index for the assigned IP:
 
@@ -169,6 +191,10 @@ The SVG report includes:
 - server and client host memory-pressure delta
 - server per-core CPU utilization
 - top server CPU symbols when `perftest.perf_record` is enabled
+
+Report generation reads an existing result directory. It needs `summary.json`;
+`run_config.json` is optional but supplies the report title/subtitle when
+present. Report mode does not SSH into the test hosts.
 
 ![QP scale report](examples/qp_scale/chart.svg)
 
@@ -211,3 +237,30 @@ Common YAML keys in `perftest.fixed` and `sweep` map to perftest flags:
 `use_gpu` are tool configuration keys and are not forwarded as perftest
 arguments. Put fixed perftest flags under `perftest.fixed`; put RDMA/OS state
 that should be checked and recorded under top-level `fixed`.
+
+## Development Checks
+
+Run the focused fixed-config and report tests:
+
+```bash
+python3 -m unittest \
+  test_rdma_sweep.TestFixedConfigChecks \
+  test_rdma_sweep.TestSweepConfig \
+  test_rdma_sweep.TestReportGeneration \
+  test_rdma_sweep.TestMainCLI
+```
+
+Check syntax, example JSON, and whitespace:
+
+```bash
+python3 -m py_compile rdma_config.py rdma_remote.py rdma_sweep.py test_rdma_sweep.py
+python3 -m json.tool examples/qp_scale/run_config.json >/dev/null
+python3 -m json.tool examples/qp_scale/summary.json >/dev/null
+git diff --check
+```
+
+Regenerate a report from the sanitized example data:
+
+```bash
+python3 rdma_sweep.py --report examples/qp_scale
+```
