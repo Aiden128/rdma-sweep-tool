@@ -41,27 +41,33 @@ perftest:
   perf_record: false
   wait_timeout: 30
   default_port: 18515
+  # Fixed perftest flags applied to every run.
+  # These values are passed to ib_write_bw; they are not OS/RDMA preflight checks.
   fixed:
-    port: 18515
-    msg_size: 64
-    device: roce-device-name
-    gid_index: 5
-    force_link: Ethernet
+    port: 18515          # -p 18515
+    msg_size: 64         # -s 64
+    device: mlx5_0       # -d mlx5_0
+    gid_index: 5         # -x 5
+    force_link: Ethernet # --force-link Ethernet
 
 ssh:
   sudo: true
   connect_timeout: 10
   options: [-o, BatchMode=yes, -o, StrictHostKeyChecking=accept-new]
 
+# Fixed RDMA/OS state checked read-only before any perftest process starts.
+# These values are recorded in run_config.json, result.json, and summary.json.
 fixed:
   server:
     rdma_device: mlx5_0
     netdev: enP2p1s0f1np1
     mtu: 4200
+    rdma_state: ACTIVE
   client:
     rdma_device: mlx5_1
     netdev: enP2p1s0f1np1
     mtu: 4200
+    rdma_state: ACTIVE
 
 sweep:
   - name: qp
